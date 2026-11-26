@@ -491,7 +491,7 @@
     </div>
 
     <!-- ===================================================================== -->
-    <!-- MODAL 4: MODO COCINA / DUEÑO (PIN 1234 + INTERRUPTORES + EXPORTAR)    -->
+    <!-- MODAL 4: MODO COCINA / DUEÑO (PIN 7142 + INTERRUPTORES + EXPORTAR)    -->
     <!-- ===================================================================== -->
     <div id="kitchen-modal" class="fixed inset-0 bg-stone-900/65 backdrop-blur-xs z-50 hidden items-end sm:items-center justify-center p-0 sm:p-4">
         <div class="bg-crema-50 rounded-t-3xl sm:rounded-3xl max-w-2xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-crema-200 overflow-hidden">
@@ -507,16 +507,16 @@
 
             <!-- Pantalla de PIN -->
             <div id="kitchen-pin-screen" class="p-6 space-y-4">
-                <p class="text-sm text-stone-600">Ingresa el PIN de cocina para administrar el menú (PIN: <strong>1234</strong>).</p>
+                <p class="text-sm text-stone-600">Ingresa el PIN de cocina para administrar el menú (PIN: <strong>71**</strong>).</p>
                 <div class="flex gap-2">
-                    <input type="password" id="kitchen-pin-input" maxlength="6" placeholder="PIN (1234)" onkeyup="if(event.key==='Enter') verifyKitchenPin()"
+                    <input type="password" id="kitchen-pin-input" maxlength="6" placeholder="PIN (7142)" onkeyup="if(event.key==='Enter') verifyKitchenPin()"
 
     class="flex-grow px-4 py-3 rounded-xl border border-crema-300 bg-white text-center text-lg font-bold tracking-widest focus:outline-none focus:border-salvia-600">
                     <button onclick="verifyKitchenPin()" class="px-6 py-3 rounded-xl bg-salvia-600 hover:bg-salvia-700 text-white font-bold text-sm cursor-pointer">
                         Entrar
                     </button>
                 </div>
-                <p id="kitchen-pin-error" class="hidden text-xs font-bold text-terracota-600">PIN incorrecto. Usa 1234.</p>
+                <p id="kitchen-pin-error" class="hidden text-xs font-bold text-terracota-600">PIN incorrecto. Usa 7142.</p>
             </div>
 
             <!-- Pantalla de Administración -->
