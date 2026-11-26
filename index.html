@@ -593,6 +593,11 @@
     <script id="app-data-and-logic">
 
         // =====================================================================
+        // URL DE GOOGLE APPS SCRIPT
+        // =====================================================================
+        const SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbyfewUyhUiUdDZPePoJudBK9lIpPn8rDulYrZvkuXI9A7kaKWzJUo9_gJbUUnHxBe3VoQ/exec';
+
+        // =====================================================================
         // CONFIGURACIÓN INICIAL (EDITABLE DESDE MODO COCINA Y SERIALIZABLE)
         // =====================================================================
         const DEFAULT_CONFIG = {
@@ -1179,6 +1184,63 @@
 
         const KITCHEN_PIN = '7142';
 
+// =====================================================================
+        // SINCRONIZACIÓN CON GOOGLE SHEETS VÍA APPS SCRIPT
+        // =====================================================================
+        function hasConfiguredSheetsApi() {
+            return typeof SHEETS_API_URL === 'string' &&
+                SHEETS_API_URL.startsWith('https://script.google.com/macros/s/') &&
+                SHEETS_API_URL.endsWith('/exec');
+        }
+
+        async function fetchRemoteMealStates() {
+            if (!hasConfiguredSheetsApi()) return;
+
+            try {
+                const resp = await fetch(`${SHEETS_API_URL}?t=${Date.now()}`, { cache: 'no-store' });
+                if (!resp.ok) return;
+                const data = await resp.json();
+
+                let changed = false;
+                ['desayunos', 'almuerzos', 'cenas'].forEach(mealKey => {
+                    if (typeof data[mealKey] === 'boolean') {
+                        state.enabledCategories[mealKey] = data[mealKey];
+                        changed = true;
+                    }
+                });
+
+                if (changed) {
+                    persistKitchenChanges();
+                    ensureValidActiveCategory();
+                    renderCategoryTabs();
+                    renderMenuGrid();
+                    if (!document.getElementById('kitchen-admin-screen').classList.contains('hidden')) {
+                        renderKitchenAdminPanel();
+                    }
+                }
+            } catch (e) {
+                console.warn('No se pudo sincronizar desde Google Sheets:', e);
+            }
+        }
+
+        async function pushMealStateToSheets(mealKey, isActive) {
+            if (!hasConfiguredSheetsApi()) return;
+
+            try {
+                await fetch(SHEETS_API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        seccion: mealKey,
+                        activo: Boolean(isActive)
+                    })
+                });
+            } catch (e) {
+                console.warn('No se pudo enviar el cambio a Google Sheets:', e);
+            }
+        }
+        
         // =====================================================================
         // DETECCIÓN DEL DÍA ACTUAL EN GUATEMALA
         // =====================================================================
@@ -1202,7 +1264,7 @@
         // =====================================================================
         // INICIALIZACIÓN Y DETECCIÓN DE PARÁMETRO URL (?mesa=X)
         // =====================================================================
-        function initApp() {
+        function initApp(){
             // Cargar configuración guardada en localStorage si existe
             try {
                 const savedRaw = localStorage.getItem('la_cocina_de_casa_v3');
@@ -1269,7 +1331,8 @@
             renderDinnerDayButtons();
             renderMenuGrid();
             updateOrderInfo();
-
+            fetchRemoteMealStates();
+            
             if (autoDetectedFromQR) {
                 document.getElementById('qr-auto-badge').classList.remove('hidden');
                 setTimeout(() => {
@@ -2231,6 +2294,9 @@
             renderCategoryTabs();
             renderMenuGrid();
             showToast(state.enabledCategories[catKey] ? `✓ Menú ${catKey} activado` : `Menú ${catKey} oculto`);
+            if (['desayunos', 'almuerzos', 'cenas'].includes(catKey)) {
+                pushMealStateToSheets(catKey, state.enabledCategories[catKey]);
+            }        
         }
 
         function updateDishPrice(itemId, newVal) {
