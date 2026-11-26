@@ -286,8 +286,2062 @@
 
     </main>
 
-    <!-- ===================================================================== -->
     <!-- BOTÓN FLOTANTE INFERIOR: CHAROLA DE PEDIDO                            -->
     <!-- ===================================================================== -->
     <div id="floating-cart-bar" class="fixed bottom-0 inset-x-0 z-30 p-3 sm:p-4 pointer-events-none transition-transform duration-300 translate-y-full">
         <div class="max-w-3xl mx-auto pointer-events-auto">
+            <button onclick="openCartModal()"
+                class="w-full bg-salvia-700 hover:bg-salvia-600 text-white rounded-2xl p-3.5 sm:px-6 sm:py-4 shadow-xl border border-salvia-500/40 flex items-center justify-between gap-4 transition-all cursor-pointer animate-soft-bounce">
+                <div class="flex items-center gap-3 text-left min-w-0">
+                    <span id="floating-cart-count" class="w-9 h-9 rounded-xl bg-white text-salvia-700 font-extrabold text-base flex items-center justify-center shrink-0">
+                        0
+                    </span>
+                    <div class="min-w-0">
+                        <p class="text-xs text-salvia-100 font-semibold truncate" id="floating-cart-mode">Mesa 1</p>
+                        <p class="text-sm sm:text-base font-bold truncate">Ver charola y enviar pedido</p>
+                    </div>
+                </div>
+                <div class="text-right shrink-0">
+                    <span class="block text-[11px] text-salvia-100">Total</span>
+                    <span id="floating-cart-total" class="text-lg sm:text-xl font-extrabold">Q0.00</span>
+                </div>
+            </button>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL 1: CHAROLA / RESUMEN DE PEDIDO COMPLETO                         -->
+    <!-- ===================================================================== -->
+    <div id="cart-modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-xs z-50 hidden items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-crema-50 rounded-t-3xl sm:rounded-3xl max-w-xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-crema-200 overflow-hidden">
+            
+            <!-- Header Modal -->
+            <div class="bg-white px-5 sm:px-6 py-4 border-b border-crema-200 flex items-center justify-between shrink-0">
+                <div>
+                    <h3 class="font-serif text-xl sm:text-2xl font-bold text-tinta">Tu Charola de Pedido</h3>
+                    <p class="text-xs text-stone-500">Revisa tus platillos, salsas y opciones elegidas</p>
+                </div>
+                <button onclick="closeCartModal()" class="p-2 rounded-xl bg-crema-100 text-stone-600 hover:bg-crema-200 cursor-pointer" aria-label="Cerrar charola">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <!-- Cuerpo Desplazable -->
+            <div class="p-5 sm:p-6 overflow-y-auto space-y-5 flex-grow">
+                
+                <!-- Tarjeta Grande con la Mesa o Modalidad -->
+                <div class="bg-salvia-50 border-2 border-salvia-500/35 rounded-2xl p-4 flex items-start justify-between gap-3">
+                    <div>
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-salvia-600">Modalidad / Ubicación</span>
+                        <h4 id="cart-destination-title" class="text-xl sm:text-2xl font-extrabold text-tinta mt-0.5">MESA 1</h4>
+                        <p id="cart-destination-details" class="text-xs sm:text-sm text-stone-600 mt-0.5">Comer aquí en el comedor</p>
+                    </div>
+                    <button onclick="editDestinationFromCart()" class="px-3 py-1.5 rounded-xl bg-white border border-salvia-200 text-salvia-700 text-xs font-bold hover:bg-salvia-100 transition-colors cursor-pointer shrink-0">
+                        Cambiar
+                    </button>
+                </div>
+
+                <!-- Alerta si falta algún dato obligatorio -->
+                <div id="cart-missing-alert" class="hidden bg-terracota-50 border border-terracota-200 text-terracota-600 rounded-2xl p-3.5 text-xs sm:text-sm font-semibold"></div>
+
+                <!-- Desglose Ordenado por Platillos, Bebidas y Extras -->
+                <div id="cart-grouped-items" class="space-y-4"></div>
+
+                <!-- Notas especiales opcionales -->
+                <div class="bg-white rounded-2xl border border-crema-200 p-3.5">
+                    <label for="cart-special-notes" class="block text-xs font-bold text-tinta mb-1">
+                        Notas especiales para cocina (opcional):
+                    </label>
+                    <input type="text" id="cart-special-notes" placeholder="Ej. Sin cebolla en la ensalada, tortillas bien doraditas..."
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-crema-300 bg-crema-50 text-xs sm:text-sm focus:outline-none focus:border-salvia-600">
+                </div>
+
+                <!-- Totales y Tiempo Estimado -->
+                <div class="bg-white rounded-2xl border border-crema-200 p-4 space-y-2.5 text-sm">
+                    <div class="flex items-center justify-between text-stone-600">
+                        <span class="flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-salvia-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+
+                            Tiempo estimado total:
+                        </span>
+                        <strong id="cart-estimated-time" class="text-tinta">12 min</strong>
+                    </div>
+                    <div class="flex items-center justify-between text-stone-600">
+                        <span>Subtotal orden:</span>
+                        <span id="cart-subtotal" class="font-semibold text-tinta">Q0.00</span>
+                    </div>
+                    <div id="cart-delivery-row" class="hidden flex items-center justify-between text-stone-600">
+                        <span>Envío a domicilio:</span>
+                        <span id="cart-delivery-cost" class="font-semibold text-terracota-600">Q10.00</span>
+                    </div>
+                    <div class="pt-2.5 border-t border-crema-200 flex items-center justify-between text-base sm:text-lg font-extrabold text-tinta">
+                        <span>Total en Quetzales:</span>
+                        <span id="cart-grand-total" class="text-salvia-700">Q0.00</span>
+                    </div>
+                </div>
+
+                <!-- Cuadro de Respaldo WhatsApp -->
+                <div id="whatsapp-fallback-box" class="hidden bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 space-y-3">
+                    <div>
+                        <p class="text-xs font-extrabold text-amber-900 uppercase">Resumen listo para WhatsApp</p>
+                        <p class="text-xs text-amber-800 mt-0.5">Si el entorno de vista previa bloquea abrir WhatsApp directamente, copia el texto del pedido aquí o usa el enlace directo:</p>
+                    </div>
+                    <textarea id="whatsapp-raw-text" readonly rows="5" class="w-full p-2.5 rounded-xl bg-white border border-amber-200 text-xs font-mono text-tinta focus:outline-none"></textarea>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" onclick="copyOrderTextToClipboard()" class="flex-1 py-2.5 px-3 rounded-xl bg-tinta hover:bg-stone-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer">
+
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                            <span>Copiar texto del pedido</span>
+                        </button>
+                        <a id="whatsapp-direct-anchor" href="#" target="_blank" rel="noopener noreferrer" class="py-2.5 px-3.5 rounded-xl bg-[#25D366] text-white font-bold text-xs flex items-center justify-center gap-1">
+                            <span>Abrir WhatsApp ↗️</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de Acción Inferiores -->
+            <div class="bg-white px-5 sm:px-6 py-4 border-t border-crema-200 space-y-2.5 shrink-0">
+                <button type="button" onclick="sendOrderViaWhatsApp()"
+                    class="w-full py-3.5 px-5 rounded-2xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-extrabold text-sm sm:text-base shadow-md transition-all flex items-center justify-center gap-2.5 cursor-pointer">
+                    <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.1.824z"/></svg>
+                    <span>Enviar Pedido por WhatsApp</span>
+                </button>
+
+                <div class="grid grid-cols-2 gap-2.5">
+                    <button type="button" onclick="openCounterDisplayModal()"
+                        class="py-3 px-3 rounded-xl bg-crema-100 hover:bg-crema-200 text-tinta font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 cursor-pointer border border-crema-300">
+                        <svg class="w-4 h-4 text-salvia-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                        <span>Recibo de mostrador</span>
+                    </button>
+
+                    <button type="button" onclick="openCancelConfirmModal()"
+                        class="py-3 px-3 rounded-xl bg-terracota-50 hover:bg-terracota-100 text-terracota-600 font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 cursor-pointer border border-terracota-200">
+
+                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        <span>Vaciar charola</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL 2: VISTA DE RECIBO DE MOSTRADOR EN ALTO CONTRASTE               -->
+    <!-- ===================================================================== -->
+    <div id="counter-modal" class="fixed inset-0 bg-tinta z-50 hidden flex-col justify-between p-5 sm:p-8 text-white overflow-y-auto">
+        <div class="max-w-2xl mx-auto w-full space-y-6">
+            <div class="flex items-center justify-between border-b border-stone-700 pb-4">
+                <span class="px-3.5 py-1 rounded-full bg-salvia-600 text-white text-xs font-extrabold uppercase tracking-wider">
+                    La Cocina de Casa • Comanda
+                </span>
+                <button onclick="closeCounterDisplayModal()" class="px-4 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-sm font-bold cursor-pointer">
+                    Cerrar vista
+                </button>
+            </div>
+
+            <div class="bg-stone-800 rounded-3xl p-5 sm:p-6 border border-stone-700">
+                <p class="text-xs uppercase tracking-widest text-salvia-100 font-bold">Orden para</p>
+                <h2 id="counter-title" class="text-3xl sm:text-5xl font-extrabold text-white mt-1">MESA 1</h2>
+                <p id="counter-subtitle" class="text-base sm:text-lg text-stone-300 mt-1.5"></p>
+            </div>
+
+            <div class="space-y-3" id="counter-items-list"></div>
+
+            <div class="bg-salvia-700 rounded-3xl p-5 flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-salvia-100 uppercase font-bold">Tiempo Estimado</p>
+                    <p id="counter-time" class="text-xl sm:text-2xl font-extrabold">12 min</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-xs text-salvia-100 uppercase font-bold">Total a Pagar</p>
+                    <p id="counter-total" class="text-3xl sm:text-4xl font-extrabold">Q0.00</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="max-w-2xl mx-auto w-full pt-6">
+            <button onclick="closeCounterDisplayModal()" class="w-full py-4 rounded-2xl bg-white text-tinta font-extrabold text-base cursor-pointer">
+                Volver a mi charola
+            </button>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL 3: CONFIRMACIÓN PARA VACIAR PEDIDO                              -->
+    <!-- ===================================================================== -->
+    <div id="cancel-confirm-modal" class="fixed inset-0 bg-stone-900/65 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-crema-200">
+            <div class="w-12 h-12 rounded-2xl bg-terracota-100 text-terracota-600 flex items-center justify-center mb-4">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </div>
+            <h3 class="font-serif text-xl font-bold text-tinta">¿Vaciar toda la charola?</h3>
+            <p class="text-sm text-stone-600 mt-2 leading-relaxed">
+                Se quitarán todos los platillos, bebidas y extras seleccionados para dejar tu pedido en cero.
+            </p>
+            <div class="mt-6 grid grid-cols-2 gap-3">
+                <button onclick="closeCancelConfirmModal()" class="py-3 px-4 rounded-xl font-bold text-sm bg-crema-100 text-stone-700 hover:bg-crema-200 cursor-pointer">
+                    No, conservar
+                </button>
+                <button onclick="executeCancelOrder()" class="py-3 px-4 rounded-xl font-bold text-sm bg-terracota-600 text-white hover:bg-terracota-500 cursor-pointer">
+                    Sí, vaciar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL 4: MODO COCINA / DUEÑO (PIN 1234 + INTERRUPTORES + EXPORTAR)    -->
+    <!-- ===================================================================== -->
+    <div id="kitchen-modal" class="fixed inset-0 bg-stone-900/65 backdrop-blur-xs z-50 hidden items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-crema-50 rounded-t-3xl sm:rounded-3xl max-w-2xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-crema-200 overflow-hidden">
+            <div class="bg-white px-6 py-4 border-b border-crema-200 flex items-center justify-between shrink-0">
+                <div>
+                    <h3 class="font-serif text-xl font-bold text-tinta">Modo Cocina & Administración</h3>
+                    <p class="text-xs text-stone-500">Enciende tiempos de comida, edita precios/disponibilidad y descarga para GitHub</p>
+                </div>
+                <button onclick="closeKitchenModal()" class="p-2 rounded-xl bg-crema-100 text-stone-600 hover:bg-crema-200 cursor-pointer">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <!-- Pantalla de PIN -->
+            <div id="kitchen-pin-screen" class="p-6 space-y-4">
+                <p class="text-sm text-stone-600">Ingresa el PIN de cocina para administrar el menú (PIN: <strong>1234</strong>).</p>
+                <div class="flex gap-2">
+                    <input type="password" id="kitchen-pin-input" maxlength="6" placeholder="PIN (1234)" onkeyup="if(event.key==='Enter') verifyKitchenPin()"
+
+    class="flex-grow px-4 py-3 rounded-xl border border-crema-300 bg-white text-center text-lg font-bold tracking-widest focus:outline-none focus:border-salvia-600">
+                    <button onclick="verifyKitchenPin()" class="px-6 py-3 rounded-xl bg-salvia-600 hover:bg-salvia-700 text-white font-bold text-sm cursor-pointer">
+                        Entrar
+                    </button>
+                </div>
+                <p id="kitchen-pin-error" class="hidden text-xs font-bold text-terracota-600">PIN incorrecto. Usa 1234.</p>
+            </div>
+
+            <!-- Pantalla de Administración -->
+            <div id="kitchen-admin-screen" class="hidden p-6 overflow-y-auto space-y-6">
+                
+                <!-- Exportar archivo HTML listo para GitHub Pages -->
+                <div class="bg-salvia-50 border-2 border-salvia-500/30 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <h4 class="font-bold text-sm text-salvia-700">Guardar cambios permanentemente para GitHub</h4>
+                        <p class="text-xs text-stone-600 mt-0.5">Descarga el archivo <strong>index.html</strong> con tu configuración actual ya grabada adentro para subirlo directo a GitHub Pages.</p>
+                    </div>
+                    <button type="button" onclick="exportHtmlForGitHub()" class="px-4 py-2.5 rounded-xl bg-salvia-600 hover:bg-salvia-700 text-white font-bold text-xs whitespace-nowrap flex items-center justify-center gap-1.5 cursor-pointer shrink-0 shadow-xs">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        <span>Descargar index.html actualizado</span>
+                    </button>
+                </div>
+
+                <!-- INTERRUPTORES MAESTROS POR TIEMPO DE COMIDA -->
+                <div class="bg-white p-4 rounded-2xl border border-crema-200 space-y-3">
+                    <div>
+                        <h4 class="font-bold text-sm text-tinta">Tiempos de Comida Activos para el Cliente</h4>
+                        <p class="text-xs text-stone-500">Enciende o apaga cada menú según lo que estés vendiendo en esta etapa.</p>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5" id="admin-meal-toggles">
+                        <!-- Generado por JS -->
+                    </div>
+                </div>
+
+                <!-- Configuración General: Negocio, WhatsApp y Envío -->
+                <div class="bg-white p-4 rounded-2xl border border-crema-200 space-y-3">
+                    <h4 class="font-bold text-sm text-tinta">Datos del Comedor y WhatsApp Receptor</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-stone-600 mb-1">Nombre del comedor:</label>
+                            <input type="text" id="admin-business-name-input" oninput="saveKitchenSettings()"
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-crema-300 bg-crema-50 text-sm font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-stone-600 mb-1">WhatsApp (ej. 50257144147):</label>
+                            <input type="text" id="admin-whatsapp-input" oninput="saveKitchenSettings()"
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-crema-300 bg-crema-50 text-sm font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-stone-600 mb-1">Envío a domicilio (Q):</label>
+                            <input type="number" id="admin-delivery-fee-input" min="0" step="1" oninput="saveKitchenSettings()"
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-crema-300 bg-crema-50 text-sm font-bold">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lista de Platillos, Bebidas y Salsas: Precios y Disponibilidad -->
+                <div>
+                    <h4 class="font-bold text-sm text-tinta mb-1">Disponibilidad y Precios Hoy</h4>
+                    <p class="text-xs text-stone-500 mb-3">Edita cualquier precio en Quetzales o apaga el interruptor para marcarlo como "Agotado".</p>
+                    <div id="admin-dishes-list" class="space-y-2.5"></div>
+                </div>
+            </div>
+
+            <div class="bg-white px-6 py-3.5 border-t border-crema-200 flex justify-end shrink-0">
+                <button onclick="closeKitchenModal()" class="px-6 py-2.5 rounded-xl bg-tinta text-white font-bold text-sm cursor-pointer">
+                    Listo, cerrar panel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- TOAST DE NOTIFICACIÓN                                                 -->
+    <!-- ===================================================================== -->
+    <div id="toast-notification" class="fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-tinta text-white px-4 py-2.5 rounded-2xl shadow-lg text-xs sm:text-sm font-bold opacity-0 pointer-events-none transition-opacity duration-200">
+        Actualizado
+    </div>
+
+    <script id="app-data-and-logic">
+
+        // =====================================================================
+        // CONFIGURACIÓN INICIAL (EDITABLE DESDE MODO COCINA Y SERIALIZABLE)
+        // =====================================================================
+        const DEFAULT_CONFIG = {
+            businessName: 'La Cocina de Casa',
+            whatsappNumber: '50257144147',
+            deliveryFee: 10,
+            enabledCategories: {
+                cenas: true,
+                desayunos: false,
+                almuerzos: false,
+                bebidas: true
+            }
+        };
+
+        // =====================================================================
+        // CATÁLOGO COMPLETO DE LA COCINA DE CASA
+        // =====================================================================
+        const DEFAULT_MENU_ITEMS = [
+            // =================================================================
+            // 1. CENAS (ACTIVAS POR DEFECTO • MIÉRCOLES A DOMINGO)
+            // =================================================================
+            {
+                id: 'cena_chapina_clasica',
+                category: 'cenas',
+                dayKey: 'todos',
+                dayLabel: 'Todas las noches (Mié a Dom)',
+                icon: '🍳',
+                name: 'Cena Chapina Clásica',
+                price: 28,
+                prepTime: 10,
+                available: true,
+                includes: 'Incluye tortillas calientes + café de olla o fresco del día',
+                benefit: 'Proteína limpia, fibra y digestión ligera nocturna',
+                summary: 'Huevitos al gusto, frijolitos parados suaves, plátano frito, queso fresco o crema y tortillas calientes.',
+                ingredients: '2 huevos frescos al gusto, frijoles negros parados cocidos sin manteca añadida, plátano maduro frito suave, porción de queso fresco o crema pura, tortillas calientes y bebida.',
+                preparation: 'Cocemos los frijoles previamente para garantizar suavidad y preparamos los huevos y plátanos frescos al momento de tu orden.'
+            },
+            {
+                id: 'cena_chow_mein_casero',
+                category: 'cenas',
+                dayKey: 'todos',
+                dayLabel: 'Todas las noches (Mié a Dom)',
+                icon: '🍜',
+                name: 'Chow Mein Casero de Pollo y Vegetales',
+                price: 32,
+                prepTime: 10,
+                available: true,
+                includes: 'Incluye tortillas o pan y fresco natural del día',
+                benefit: 'Salteado al momento en wok • Cero desperdicio',
+                summary: 'Fideo fino salteado al instante con tiras de pechuga de pollo, zanahoria, apio, repollo y salsa soya ligera.',
+                ingredients: 'Fideo fino al dente, tiras de pechuga de pollo magra, julianas de zanahoria, apio crujiente, repollo fresco, cebollín y toque de salsa soya ligera.',
+                preparation: 'Salteamos al momento a fuego vivo las tiras de pollo y los vegetales frescos para que salgan humeantes y crujientes.'
+            },
+            {
+                id: 'cena_churrasquito_noche',
+                category: 'cenas',
+                dayKey: 'todos',
+                dayLabel: 'Todas las noches (Mié a Dom)',
+                icon: '🥩',
+                name: 'Churrasquito / Carnita Asada de Noche',
+                price: 40,
+                prepTime: 14,
+                available: true,
+                hasSauceSelector:
+                    true,
+                includes: 'Incluye frijolitos, cebollines, chirmol, tortillas y salsa a elegir',
+                benefit: 'Asado al momento con ingredientes frescos',
+                summary: 'Corte de res asado al momento con frijolitos parados, cebollines, chirmol fresco y tortillas.',
+                ingredients: 'Corte de res porcionado fresco, frijoles negros parados, cebollines asados, chirmol de tomate natural con cilantro y tortillas calientes.',
+                preparation: 'Asamos la carne directamente al caer tu pedido y acompañamos con chirmol recién picado.'
+            },
+            {
+                id: 'cena_torta_huevo_rellena',
+                category: 'cenas',
+                dayKey: 'todos',
+                dayLabel: 'Todas las noches (Mié a Dom)',
+                icon: '🥧',
+                name: 'Torta de Huevo Rellena de la Casa',
+                price: 30,
+                prepTime: 12,
+                available: true,
+                optionLabel: 'Elige el relleno',
+                options: ['Jamón y Queso', 'Carne Desmenuzada', 'Queso Fundente (Pizza)'],
+                hasSauceSelector: true,
+                includes: 'Incluye ensalada fresca, tortillas o pan + salsa a elegir',
+                benefit: 'Especialidad única de la casa hecha al instante',
+                summary: 'Estilo tortilla española con papa en cubitos y huevo batido al momento, con relleno a tu elección.',
+                ingredients: 'Huevos frescos batidos, papa en cubitos tiernos, cebolla suave, relleno a elegir (jamón, carne sazonada o queso fundente), ensalada fresca y tortillas.',
+                preparation: 'Cuajamos la torta en sartén al momento con papa precocida lista para dorar, logrando un exterior dorado y centro jugoso.'
+            },
+            {
+                id: 'cena_sandwich_huevo',
+                category: 'cenas',
+                dayKey: 'todos',
+                dayLabel: 'Todas las noches (Mié a Dom)',
+                icon: '🥪',
+                name: 'Sándwich de Huevo Tostado',
+                price: 22,
+                prepTime: 8,
+                available: true,
+                hasSauceSelector: true,
+                includes: 'Incluye bebida caliente o fresco + salsa a elegir',
+                benefit: 'Cena ligera, rápida y reconfortante',
+                summary: 'Pan tostado al momento con huevo cremoso al gusto, rodajas de tomate, aguacate y toque de queso.',
+                ingredients: 'Pan de caja dorado a la plancha, 2 huevos frescos al gusto, rodajas de tomate maduro, aguacate fresco y lasca de queso.',
+                preparation: 'Tostamos el pan y cocinamos el huevo al instante para servirlo calentito y crujiente.'
+            },
+            {
+                id: 'cena_panqueques_noche',
+                category: 'cenas',
+                dayKey: 'todos',
+                dayLabel: 'Todas las noches (Mié a Dom)',
+                icon: '🥞',
+                name: 'Panqueques de Noche',
+                price: 25,
+                prepTime: 10,
+                available: true,
+                optionLabel: 'Elige tu estilo',
+                options: ['Dulces (Fruta y Miel)', 'Salados (Huevo y Queso)'],
+                includes: 'Incluye café de olla, té negro o chocolate artesanal',
+                benefit: 'Versátiles, esponjosos y preparados al momento',
+                summary: 'Torre de 3 panqueques recién hechos: pídelos dulces con fruta y miel o estilo salado con huevo y queso.',
+                ingredients: '3 panqueques esponjosos hechos al momento; versión dulce con fruta fresca de temporada y miel de abeja/panela, o versión salada con huevo revuelto y queso.',
+                preparation: 'Vertemos la mezcla fresca sobre la plancha caliente al recibir tu pedido.'
+            },
+            {
+                id: 'cena_ensalada_fresca',
+                category: 'cenas',
+                dayKey: 'todos',
+                dayLabel: 'Todas las noches (Mié a Dom)',
+                icon: '🥗',
+                name: 'Ensalada Fresca del Momento',
+                price: 24,
+                prepTime: 6,
+                available: true,
+                includes: 'Incluye pan tostado o tortillas + aderezo natural',
+                benefit: '100% cruda, hidratante y armada al instante',
+                summary: 'Lechuga crujiente, pepino, tomate, aguacate, cebolla morada y aderezo natural de limón y aceite de oliva.',
+                ingredients: 'Hojas frescas de lechuga, rodajas de pepino, tomate maduro, cubos de aguacate, julianas finas de cebolla morada, limón fresco y aceite de oliva.',
+                preparation: 'Armamos y aderezamos la ensalada únicamente al momento de pedirla para que conserve toda su frescura y textura crocante.'
+            },
+            // --- ESPECIALES ROTATIVOS DE MIÉRCOLES A DOMINGO ---
+            {
+                id: 'cena_esp_miercoles_papas_pollo',
+                category: 'cenas',
+                dayKey: 'miercoles',
+                dayLabel: 'Especial de Miércoles',
+                icon: '🥔',
+                name: 'Papas Salteadas con Pechuga de Pollo en Trozos',
+                price: 34,
+                prepTime: 12,
+                available: true,
+                hasSauceSelector: true,
+                includes: 'Incluye ensalada fresca, tortillas y salsa a elegir',
+                benefit: 'Cocción rápida al sartén con proteína magra',
+                summary: 'Trozos jugosos de pechuga de pollo salteados al momento con papas doraditas, hierbas y ensalada fresca.',
+                ingredients: 'Trozos de pechuga de pollo sazonados, papas doradas al sartén con ajo y hierbas aromáticas, ensalada fresca del momento y tortillas.',
+                preparation: 'Salteamos juntos los trozos de pollo y las papas precocidas al instante para que queden dorados por fuera y suaves por dentro.'
+            },
+            {
+                id: 'cena_esp_jueves_pollo_agridulce',
+                category: 'cenas',
+                dayKey: 'jueves',
+                dayLabel: 'Especial de Jueves',
+                icon: '🥡',
+                name: 'Pollo Agridulce Estilo Chino',
+                price: 35,
+                prepTime: 12,
+                available: true,
+                includes: 'Incluye arroz blanco suelto o tortillas + fresco del día',
+                benefit: 'Salteado rápido con vegetales crujientes',
+                summary: 'Trozos de pechuga de pollo sellados al momento con pimiento, cebolla y salsa agridulce casera.',
+                ingredients: 'Trozos de pechuga de pollo sellados al momento, tiras de chile pimiento rojo y verde, cebolla en gajos, salsa agridulce artesanal y arroz blanco.',
+                preparation: 'Sellamos el pollo al momento y lo bañamos en nuestra salsa agridulce casera junto con vegetales crujientes.'
+                },
+            {
+                id: 'cena_esp_viernes_carnita_carbon',
+                category: 'cenas',
+                dayKey: 'viernes',
+                dayLabel: 'Viernes de Asados',
+                icon: '🔥',
+                name: 'Carnita Asada Especial al Carbón',
+                price: 44,
+                prepTime: 15,
+                available: true,
+                hasSauceSelector: true,
+                includes: 'Incluye frijolitos, cebollines, aguacate, tortillas y salsa a elegir',
+                benefit: 'Asado al carbón al momento sin desperdicios',
+                summary: 'Corte especial de res asado al carbón al instante con cebollines, aguacate, chirmol y frijolitos.',
+                ingredients: 'Corte especial de res seleccionado asado al carbón, cebollines tiernos, porción de aguacate, chirmol fresco, frijoles parados y tortillas.',
+                preparation: 'Asamos cada porción al momento sobre brasas para conservar todo el jugo y aroma tradicional del viernes.'
+            },
+            {
+                id: 'cena_esp_viernes_pizza',
+                category: 'cenas',
+                dayKey: 'viernes',
+                dayLabel: 'Viernes & Sábado • Noche de Pizza',
+                icon: '🍕',
+                name: 'Pizza Artesanal Personal de la Casa',
+                price: 38,
+                prepTime: 15,
+                available: true,
+                optionLabel: 'Elige especialidad',
+                options: ['Jamón y Queso Fundente', 'Pollo y Vegetales Frescos', 'Full Carne y Cebolla'],
+                hasSauceSelector: true,
+                includes: 'Recién horneada al momento • Incluye salsa a elegir',
+                benefit: 'Masa artesanal preparada al instante',
+                summary: 'Pizza personal hecha al momento con salsa natural de tomate, abundante queso fundente e ingredientes frescos.',
+                ingredients: 'Base artesanal de masa fresca, salsa de tomate natural condimentada en casa, queso fundente tipo mozzarella y toppings frescos a elegir.',
+                preparation: 'Armamos y horneamos tu pizza en el momento en que entra la orden para que llegue burbujeante a tu mesa.'
+            },
+            {
+                id: 'cena_esp_sabado_tostadas',
+                category: 'cenas',
+                dayKey: 'sabado',
+                dayLabel: 'Especial de Sábado',
+                icon: '🌮',
+                name: 'Trío de Tostadas Chapinas Tradicionales',
+                price: 24,
+                prepTime: 8,
+                available: true,
+                hasSauceSelector: true,
+                includes: 'Incluye 3 tostadas (guacamol, frijol y salsa) + salsa a elegir',
+                benefit: 'Crujientes, ligeras y preparadas al instante',
+                summary: 'Tres tostadas crujientes untadas al momento con guacamol fresco, frijol volteado y salsa natural de tomate.',
+                ingredients: '3 tortillas tostadas crujientes, guacamol preparado al instante con limón, frijoles negros volteados, salsa natural de tomate, queso seco y perejil.',
+                preparation: 'Untamos las tostadas justo antes de servirlas para que lleguen perfectamente crujientes.'
+            },
+            {
+                id: 'cena_esp_domingo_bistec_pasta',
+                category: 'cenas',
+                dayKey: 'domingo',
+                dayLabel: 'Especial de Domingo',
+                icon: '🍝',
+                name: 'Bistec de Res Encebollado o Pasta Casera',
+                price: 36,
+                prepTime: 12,
+                available: true,
+                optionLabel: 'Elige plato de domingo',
+                options: ['Bistec de Res Encebollado', 'Pasta Casera Estilo Italiano con Pollo'],
+                hasSauceSelector: true,
+                includes: 'Incluye acompañamiento fresco y salsa a elegir',
+                benefit: 'Cierre de semana casero hecho al momento',
+                summary: 'Elige entre bistec suave de res encebollado con ensalada fresca o pasta casera con salsa natural de tomate y pollo.',
+                ingredients: 'Opción 1: Filete suave de res salteado con cebolla, tomate y ensalada fresca. Opción 2: Pasta al dente con salsa natural de tomate, albahaca y pechuga de pollo.',
+                preparation: 'Preparamos tu elección al momento para cerrar la semana con sabor de hogar.'
+            },
+            // =================================================================
+            // 2. DESAYUNOS (OCULTOS POR DEFECTO • ACTIVABLES EN MODO COCINA)
+            // =================================================================
+            {
+                id: 'desayuno_chapin_tradicional',
+                category: 'desayunos',
+                icon: '🍳',
+                name: 'Desayuno Chapín Tradicional',
+                price: 28,
+                prepTime: 10,
+                available: true,
+                includes: 'Incluye tortillas calientes + café de olla o jugo natural',
+                benefit: 'Energía limpia y digestión ligera',
+                summary: 'Frijolitos parados suaves, plátano frito o cocido, queso fresco o crema y huevos al gusto.',
+                ingredients: '2 huevos al gusto, frijoles negros parados suaves, plátano maduro, queso fresco o crema, tortillas calientes y café de olla o jugo natural.',
+                preparation: 'Servido fresco al momento con frijolitos recién calentados y tortillas del comal.'
+            },
+            {
+                id: 'desayuno_huevos_estrellados_punto',
+                category: 'desayunos',
+                icon: '🍳',
+                name: 'Huevos Estrellados al Punto',
+                price: 26,
+                prepTime: 8,
+                available: true,
+                optionLabel: 'Elige el término de la yema (obligatorio)',
+                options: ['Término medio (Yema suave)', 'Bien cocidos (Yema firme)'],
+                includes: 'Incluye frijolitos parados, queso, tortillas y café de olla',
+                benefit: 'Cocinados exactamente al término que prefieres',
+                summary: 'Dos huevos estrellados preparados exactamente a tu término elegido, con frijolitos parados, queso y tortillas.',
+                ingredients: '2 huevos frescos estrellados al término elegido, frijoles parados, queso fresco, tortillas calientes y café de olla o jugo.',
+                preparation: 'Controlamos la temperatura del sartén al momento para entregarte la yema exactamente en término medio o bien cocida.'
+            },
+            {
+                id: 'desayuno_huevitos_tomate_cebolla',
+                category: 'desayunos',
+                icon: '🍅',
+                name: 'Huevitos Revueltos con Tomate y Cebollita',
+                price: 26,
+                prepTime: 8,
+                available: true,
+                includes: 'Incluye frijolitos parados, crema, tortillas y café de olla',
+                benefit: 'Vegetales frescos salteados al instante',
+                summary: 'Huevitos revueltos jugosos con tomate maduro y cebollita picada al momento, frijolitos y crema.',
+                ingredients: '2 huevos frescos revueltos con tomate y cebolla picados al instante, frijoles parados, crema pura, tortillas calientes y café de olla.',
+                preparation: 'Soasamos ligeramente el tomate y la cebolla al momento antes de agregar el huevo para mantener toda su jugosidad.'
+            },
+            {
+                id: 'desayuno_panqueques_casa',
+                category: 'desayunos',
+                icon: '🥞',
+                name: 'Panqueques Esponjosos de Casa',
+                price: 25,
+                prepTime: 10,
+                available: true,
+                includes: 'Incluye fruta de temporada, miel/panela y café de olla o jugo',
+                benefit: 'Vitalidad matutina con fruta fresca',
+                summary: 'Torre de 3 panqueques hechos al momento con fruta fresca de temporada y miel de abeja o panela.',
+                ingredients: '3 panqueques esponjosos, fruta fresca de temporada, miel de abeja o miel de panela y bebida a elegir.',
+                preparation: 'Preparados sobre la plancha caliente al recibir tu orden.'
+            },
+            // =================================================================
+            // 3. ALMUERZOS (OCULTOS POR DEFECTO • ACTIVABLES EN MODO COCINA)
+            // =================================================================
+            {
+                id: 'almuerzo_pollo_crema_brocoli',
+                category: 'almuerzos',
+                icon: '🍗',
+                name: 'Pollo en Crema Casero con Ensalada de Brócoli',
+                price: 35,
+                prepTime: 12,
+                available: true,
+                hasSauceSelector: true,
+                includes: 'Incluye arroz blanco, tortillas y fresco natural del día',
+                benefit: 'Proteína suave y brócoli rico en antioxidantes',
+                summary: 'Pechuga bañada en crema natural artesanal con arroz blanco y ensalada de brócoli al vapor con limón.',
+                ingredients: 'Pechuga de pollo en crema natural de la casa, arroz blanco, arbolitos de brócoli blanqueados con limón, tortillas y fresco.',
+                preparation: 'Blanqueamos el brócoli al punto para conservar su color verde vivo y vitaminas.'
+            },
+            {
+                id: 'almuerzo_bistec_ejotes',
+                category: 'almuerzos',
+                icon: '🥩',
+                name: 'Bistec de Res Encebollado con Ensalada de Ejotes',
+                price: 38,
+                prepTime: 12,
+                available: true,
+                hasSauceSelector: true,
+                includes: 'Incluye tortitas de papa, tortillas y fresco del día',
+                benefit: 'Hierro natural y fibra de vegetales frescos',
+                summary: 'Filete suave de res salteado con cebolla y tomate, acompañado de tortitas de papa y ensalada de ejotes.',
+                ingredients: 'Filete suave de res, cebolla, tomate natural, tortitas de papa, ensalada fresca de ejotes tiernos, tortillas y fresco.',
+                preparation: 'Salteamos la carne al punto para mantenerla jugosa junto con vegetales frescos.'
+            },
+            {
+                id: 'almuerzo_pechuga_ensalada_rusa',
+                category: 'almuerzos',
+                icon: '🌿',
+                name: 'Pechuga a la Plancha con Ensalada Rusa Casera',
+                price: 34,
+                prepTime: 10,
+                available: true,
+                hasSauceSelector: true,
+                includes: 'Incluye arroz blanco, tortillas y fresco del día',
+                benefit: 'Digestión ligera y aroma natural de hierbas',
+                summary: 'Pechuga marinada con hierbas asada al momento, acompañada de ensalada rusa casera y arroz.',
+                ingredients: 'Pechuga de pollo marinada con romero y ajo, ensalada rusa casera (papa, zanahoria y arveja), arroz blanco, tortillas y fresco.',
+                preparation: 'Asamos la pechuga a la plancha al momento para sellar sus jugos naturales.'
+            },
+            {
+                id: 'almuerzo_chow_mein_fijo',
+                category: 'almuerzos',
+                icon: '🍜',
+                name: 'Chow Mein Casero Fijo',
+                price: 32,
+                prepTime: 10,
+                available: true,
+                includes: 'Incluye tortillas o pan y fresco natural del día',
+                benefit: 'Preparado fresco al momento • Cero desperdicio',
+                summary: 'Fideo salteado al momento en wok con pollo, zanahoria, apio, repollo y salsa soya ligera.',
+                ingredients: 'Fideo fino al dente, tiras de pechuga de pollo, zanahoria, apio, repollo y salsa soya ligera.',
+                preparation: 'Salteado al instante a fuego vivo.'
+            },
+            // =================================================================
+            // 4. BEBIDAS (ACTIVAS POR DEFECTO)
+            // =================================================================
+            {
+                id: 'bebida_horchata_salvadorena',
+                category: 'bebidas',
+                subTag: 'Artesanal • Estrella',
+                subTagStyle: 'bg-amber-100 text-amber-800 border-amber-200',
+                icon: '🥛',
+                name: 'Horchata Salvadoreña Artesanal',
+                price: 12,
+                prepTime: 4,
+                available: true,
+                includes: 'Licuada al momento con pasta artesanal • Vaso grande frío',
+                benefit: 'Energía natural de semillas tostadas y canela',
+                summary: 'Preparada en licuadora al momento con pasta artesanal de morro, ajonjolí, maní, pepitoria y canela.',
+                ingredients: 'Pasta artesanal salvadoreña de semilla de morro, ajonjolí, maní, pepitoria, arroz y canela en raja, licuada con agua pura y hielo.',
+                preparation: 'Licuamos la pasta artesanal al instante para servir una horchata cremosa, espumosa y bien fría.'
+            },
+            {
+                id: 'bebida_cafe_olla',
+                category: 'bebidas',
+                subTag: 'Tradicional',
+                subTagStyle: 'bg-amber-100 text-amber-800 border-amber-200',
+                icon: '☕',
+                name: 'Café de Olla / Jarrilla',
+                price: 8,
+                prepTime: 3,
+                available: true,
+                includes: 'Taza caliente recién servida',
+                benefit: 'Antioxidantes naturales y aroma de hogar',
+                summary: 'Café cocido tradicional guatemalteco con toque aromático de canela.',
+                ingredients: 'Café molido guatemalteco cocido lentamente en olla con rajita de canela.',
+                preparation: 'Servido bien caliente al instante.'
+            },
+            {
+                id: 'bebida_te_negro',
+                category: 'bebidas',
+                subTag: 'Natural',
+                subTagStyle: 'bg-salvia-100 text-salvia-700 border-salvia-200',
+                icon: '🍵',
+                name: 'Té Negro Preparado en Casa',
+                price: 8,
+                prepTime: 3,
+                available: true,
+                optionLabel: 'Elige temperatura',
+                options: ['Caliente con Limón', 'Frío con Hielo y Limón'],
+                includes: 'Infusión natural preparada en casa',
+                benefit: 'Digestivo, ligero y revitalizante',
+                summary: 'Infusión de té negro preparada en casa, servido caliente o frío con rodaja de limón.',
+                ingredients: 'Hojas de té negro infusionadas en casa, agua pura y rodaja de limón fresco.',
+                preparation: 'Infusionado en su punto justo para evitar amargor.'
+            },
+            {
+                id: 'bebida_chocolate_artesanal',
+                category: 'bebidas',
+                subTag: 'Artesanal',
+                subTagStyle: 'bg-amber-100 text-amber-800 border-amber-200',
+                icon: '🍫',
+                name: 'Chocolate Caliente Artesanal Bebible',
+                price: 12,
+                prepTime: 5,
+                available: true,
+                includes: 'Taza caliente espumosa',
+                benefit: 'Cacao puro, magnesio natural y bienestar',
+                summary: 'Bebible tradicional preparado con tablilla artesanal de cacao puro y canela.',
+                ingredients: 'Cacao puro tostado y molido artesanalmente, canela en raja y agua o leche al gusto.',
+                preparation: 'Batido al momento para servirlo espumoso y reconfortante.'
+            },
+            {
+                id: 'bebida_ponche_frutas',
+                category: 'bebidas',
+                subTag: 'Temporada',
+                subTagStyle: 'bg-terracota-100 text-terracota-600 border-terracota-200',
+                icon: '🍎',
+                name: 'Ponche de Frutas de Temporada',
+                price: 14,
+                prepTime: 4,
+                available: true,
+                includes: 'Vaso caliente con trozos de fruta natural',
+                summary: 'Receta casera tradicional con frutas naturales cocidas, canela y especias.',
+                ingredients: 'Piña, papaya, manzana, pasas, ciruela pasa, plátano, canela en raja, pimienta gorda y panela.',
+                preparation: 'Cocinado a fuego lento con frutas frescas picadas y servido bien caliente.'
+            },
+            {
+                id: 'bebida_frescos_naturales',
+                category: 'bebidas',
+                subTag: 'Natural del Día',
+                subTagStyle: 'bg-salvia-100 text-salvia-700 border-salvia-200',
+                icon: '🍹',
+                name: 'Frescos Naturales del Día',
+                price: 10,
+                prepTime: 2,
+                available: true,
+                optionLabel: 'Elige sabor natural',
+                options: ['Rosa de Jamaica', 'Tamarindo Natural', 'Limonada con Hierbabuena'],
+                includes: 'Vaso grande frío • 100% fruta o flor natural',
+                benefit: 'Hidratación pura sin colorantes artificiales',
+                summary: 'Preparados en casa con fruta natural y punto suave de dulce: jamaica, tamarindo o limonada con hierbabuena.',
+                ingredients: 'Flor de jamaica, pulpa natural de tamarindo o jugo de limón recién exprimido con hojas de hierbabuena.',
+                preparation: 'Preparado fresco cada día.'
+            },
+            {
+                id: 'bebida_gaseosa',
+                category: 'bebidas',
+                subTag: 'Gaseosa',
+                subTagStyle: 'bg-sky-100 text-sky-800 border-sky-200',
+                icon: '🥤',
+                name: 'Gaseosa en Lata / Botella',
+                price: 8,
+                prepTime: 1,
+                available: true,
+                includes: 'Bien fría • Consulta sabores disponibles',
+                benefit: 'Refrescante al instante',
+                summary: 'Variedad de gaseosas individuales bien frías.',
+                ingredients: 'Bebida carbonatada en presentación individual refrigerada.',
+                preparation: 'Servida bien fría con vaso y hielo si deseas.'
+            },
+            {
+                id: 'bebida_cerveza_nacional',
+                category: 'bebidas',
+                subTag: 'Con alcohol +18',
+                subTagStyle: 'bg-purple-100 text-purple-800 border-purple-200',
+                icon: '🍺',
+                name: 'Cerveza Nacional Fría',
+                price: 15,
+                prepTime: 1,
+                available: true,
+                includes: 'Solo mayores de 18 años • Bien fría',
+                benefit: 'Ideal para acompañar el Viernes de Asados o Pizza',
+                summary: 'Cerveza nacional servida bien fría para acompañar tus cenas.',
+                ingredients: 'Cerveza nacional en lata o botella refrigerada.',
+                preparation: 'Servida a temperatura ideal junto con limón y sal si gustas.'
+            },
+            // =================================================================
+            // 5. SALSAS Y EXTRAS DE LA CASA (BOTECITOS ADICIONALES Q5)
+            // =================================================================
+            {
+                id: 'extra_salsa_picante_casa',
+                category: 'salsas',
+                subTag: 'Receta Propia • Picante',
+                subTagStyle: 'bg-terracota-100 text-terracota-600 border-terracota-200',
+                icon: '🌶️',
+                name: 'Picante de la Casa (Botecito Extra)',
+                price: 5,
+                prepTime: 1,
+                available: true,
+                includes: 'Porción extra para llevar o compartir en mesa',
+                benefit: 'Receta propia tatemada de la casa',
+                summary: 'Nuestra salsa picante artesanal receta propia, hecha con chiles asados, tomate, ajo y especias.',
+                ingredients: 'Tomate asado, chile jalapeño y chile de árbol/cobanero, ajo tatemado, cebolla y toque de limón.',
+                preparation: 'Tatemada y molida en casa en lotes frescos.'
+            },
+            {
+                id: 'extra_salsa_aguacate',
+                category: 'salsas',
+                subTag: 'Sin Picante • Cremosa',
+                subTagStyle: 'bg-salvia-100 text-salvia-700 border-salvia-200',
+                icon: '🥑',
+                name: 'Verde Cremosa de Aguacate (Botecito Extra)',
+                price: 5,
+                prepTime: 2,
+                available: true,
+                includes: 'Porción extra para llevar o compartir en mesa',
+                benefit: 'Sin picante • Aguacate fresco y cilantro',
+                summary: 'Salsa verde cremosa sin picante elaborada con aguacate maduro, cilantro fresco, limón y ajo suave.',
+                ingredients: 'Aguacate Hass maduro, cilantro fresco, jugo de limón, ajo suave y pizca de sal.',
+                preparation: 'Emulsionada fresca al momento para conservar su color verde vivo.'
+            },
+            {
+                id: 'extra_chimichurri_casero',
+                category: 'salsas',
+                subTag: 'Sin Picante • Aromático',
+                subTagStyle: 'bg-amber-100 text-amber-800 border-amber-200',
+                icon: '🌿',
+                name: 'Chimichurri Casero (Botecito Extra)',
+                price: 5,
+                prepTime: 1,
+                available: true,
+                includes: 'Porción extra para carnes, papas o pizza',
+                benefit: 'Sin picante • Hierbas frescas picadas a cuchillo',
+                summary: 'Chimichurri artesanal aromático con perejil y cilantro finos, ajo, orégano, aceite y toque de vinagre.',
+                ingredients: 'Perejil fresco, cilantro, ajo picado fino, orégano seco, aceite vegetal/oliva y vinagre suave.',
+                preparation: 'Macerado en casa para potenciar el sabor de carnes asadas, papas salteadas y pizzas.'
+            }
+        ];
+
+        const SAUCE_CHOICES = [
+            'Picante de la Casa (Receta Propia)',
+            'Verde Cremosa de Aguacate (Sin picante)',
+            'Chimichurri Casero (Sin picante)',
+            'Sin salsa'
+        ];
+        // =====================================================================
+        // ESTADO GLOBAL DE LA APLICACIÓN
+        // =====================================================================
+        let menuItems = JSON.parse(JSON.stringify(DEFAULT_MENU_ITEMS));
+        let state = {
+            businessName: DEFAULT_CONFIG.businessName,
+            whatsappNumber: DEFAULT_CONFIG.whatsappNumber,
+            deliveryFee: DEFAULT_CONFIG.deliveryFee,
+            enabledCategories: { ...DEFAULT_CONFIG.enabledCategories },
+            mode: 'mesa', // 'mesa' | 'llevar' | 'domicilio'
+            selectedTable: 'Mesa 1',
+            customerName: '',
+            pickupTime: '',
+            deliveryAddress: '',
+            deliveryMapsLink: '',
+            activeCategory: 'cenas',
+            selectedDinnerDay: 'hoy', // 'hoy' | 'todos' | 'miercoles' ... 'domingo'
+            itemSelections: {}, // { itemId: { option: '...', sauce: '...' } }
+            cart: {} // { cartKey: { itemId, option, sauce, qty } }
+        };
+
+        const KITCHEN_PIN = '1234';
+
+        // =====================================================================
+        // DETECCIÓN DEL DÍA ACTUAL EN GUATEMALA
+        // =====================================================================
+        function getGuatemalaDayInfo() {
+            const daysMap = [
+                { key: 'domingo', label: 'Domingo', isRestDay: false },
+                { key: 'lunes', label: 'Lunes', isRestDay: true },
+                { key: 'martes', label: 'Martes', isRestDay: true },
+                { key: 'miercoles', label: 'Miércoles', isRestDay: false },
+                { key: 'jueves', label: 'Jueves', isRestDay: false },
+                { key: 'viernes', label: 'Viernes', isRestDay: false },
+                { key: 'sabado', label: 'Sábado', isRestDay: false }
+            ];
+            try {
+                const nowGt = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Guatemala' }));
+                return daysMap[nowGt.getDay()];
+            } catch (e) {
+                return daysMap[new Date().getDay()];
+            }
+        }
+        // =====================================================================
+        // INICIALIZACIÓN Y DETECCIÓN DE PARÁMETRO URL (?mesa=X)
+        // =====================================================================
+        function initApp() {
+            // Cargar configuración guardada en localStorage si existe
+            try {
+                const savedRaw = localStorage.getItem('la_cocina_de_casa_v3');
+                if (savedRaw) {
+                    const saved = JSON.parse(savedRaw);
+                    if (saved.businessName) state.businessName = saved.businessName;
+                    if (saved.whatsappNumber) state.whatsappNumber = saved.whatsappNumber;
+                    if (typeof saved.deliveryFee === 'number') state.deliveryFee = saved.deliveryFee;
+                    if (saved.enabledCategories) {
+                        state.enabledCategories = { ...state.enabledCategories, ...saved.enabledCategories };
+                    }
+                    if (saved.itemsOverride) {
+                        menuItems.forEach(item => {
+                            const ov = saved.itemsOverride[item.id];
+                            if (ov) {
+                                if (typeof ov.available === 'boolean') item.available = ov.available;
+                                if (typeof ov.price === 'number' && ov.price >= 0) item.price = ov.price;
+                            }
+                        });
+                    }
+                }
+            } catch (e) {
+                console.warn('No se pudo leer localStorage:', e);
+            }
+
+            // Inicializar selecciones por defecto en tarjetas con opciones o salsas
+            menuItems.forEach(item => {
+                state.itemSelections[item.id] = {
+                    option: item.options && item.options.length > 0 ? item.options[0] : '',
+                    sauce: item.hasSauceSelector ? SAUCE_CHOICES[0] : ''
+                };
+            });
+
+            document.getElementById('header-business-name').textContent = state.businessName;
+
+            // Día actual en Guatemala y aviso si es Lunes o Martes
+            const todayInfo = getGuatemalaDayInfo();
+            document.getElementById('today-day-label').textContent = `Hoy es ${todayInfo.label}`;
+            if (todayInfo.isRestDay) {
+                const restBanner = document.getElementById('rest-day-banner');
+                document.getElementById('rest-day-title').textContent = `Hoy es ${todayInfo.label} (Día de descanso en cocina)`;
+                restBanner.classList.remove('hidden');
+            }
+
+            // Detectar parámetro URL ?mesa=X
+            const urlParams = new URLSearchParams(window.location.search);
+            const mesaParam = urlParams.get('mesa');
+            let autoDetectedFromQR = false;
+
+            if (mesaParam) {
+                const num = mesaParam.replace(/\D/g, '');
+                if (['1', '2', '3', '4', '5', '6'].includes(num)) {
+                    state.mode = 'mesa';
+                    state.selectedTable = `Mesa ${num}`;
+                    autoDetectedFromQR = true;
+                }
+            }
+
+            ensureValidActiveCategory();
+            renderTableButtons();
+            selectOrderMode(state.mode);
+            updateDeliveryFeeDisplays();
+            renderCategoryTabs();
+            renderDinnerDayButtons();
+            renderMenuGrid();
+            updateOrderInfo();
+
+            if (autoDetectedFromQR) {
+                document.getElementById('qr-auto-badge').classList.remove('hidden');
+                setTimeout(() => {
+                    document.getElementById('menu-section').scrollIntoView({ behavior: 'smooth' });
+                }, 250);
+            }
+        }
+
+        function persistKitchenChanges() {
+            try {
+                const itemsOverride = {};
+                menuItems.forEach(item => {
+                    itemsOverride[item.id] = {
+                        available: item.available,
+                        price: item.price
+                    };
+                });
+                localStorage.setItem('la_cocina_de_casa_v3', JSON.stringify({
+                    businessName: state.businessName,
+                    whatsappNumber: state.whatsappNumber,
+                    deliveryFee: state.deliveryFee,
+                    enabledCategories: state.enabledCategories,
+                    itemsOverride
+                }));
+            } catch (e) {
+                console.warn('No se pudo guardar en localStorage:', e);
+            }
+        }
+        // =====================================================================
+        // PANTALLA 1: SELECCIÓN DE MESA Y MODALIDAD
+        // =====================================================================
+        function renderTableButtons() {
+            const grid = document.getElementById('table-buttons-grid');
+            const tables = ['Mesa 1', 'Mesa 2', 'Mesa 3', 'Mesa 4', 'Mesa 5', 'Mesa 6'];
+
+            grid.innerHTML = tables.map(tbl => {
+                const isSelected = state.selectedTable === tbl;
+                return `
+                    <button type="button" onclick="selectTable('${tbl}')"
+                        class="py-3.5 px-2 rounded-2xl font-extrabold text-xs sm:text-sm transition-all cursor-pointer border-2 ${
+                            isSelected
+                                ? 'bg-salvia-600 text-white border-salvia-600 shadow-xs'
+                                : 'bg-crema-50 text-tinta border-crema-200 hover:bg-crema-100'
+                        }">
+                        ${tbl}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function selectTable(tbl) {
+            state.selectedTable = tbl;
+            renderTableButtons();
+            updateOrderInfo();
+        }
+
+        function selectOrderMode(mode) {
+            state.mode = mode;
+            const modes = ['mesa', 'llevar', 'domicilio'];
+
+            modes.forEach(m => {
+                const btn = document.getElementById(`mode-btn-${m}`);
+                const form = document.getElementById(`form-mode-${m}`);
+                if (m === mode) {
+                    btn.className = 'flex items-center justify-center gap-2.5 p-4 rounded-2xl border-2 font-bold text-sm transition-all cursor-pointer border-salvia-600 bg-salvia-50 text-salvia-700 shadow-2xs';
+                    form.classList.remove('hidden');
+                } else {
+                    btn.className = 'flex items-center justify-center gap-2.5 p-4 rounded-2xl border-2 font-bold text-sm transition-all cursor-pointer border-crema-200 bg-crema-50 text-stone-600 hover:bg-crema-100';
+                    form.classList.add('hidden');
+                }
+            });
+
+            updateOrderInfo();
+        }
+
+        function getDestinationSummary() {
+            if (state.mode === 'mesa') {
+                const namePart = state.customerName.trim() ? ` (${state.customerName.trim()})` : '';
+                return {
+                    bannerText: `Estás pidiendo desde: ${state.selectedTable}${namePart}`,
+                    shortText: `${state.selectedTable}${namePart}`,
+                    modalTitle: state.selectedTable.toUpperCase(),
+                    modalDetails: state.customerName.trim()
+                        ? `Comer aquí • Cliente: ${state.customerName.trim()}`
+                        : 'Comer aquí en el comedor'
+                };
+            } else if (state.mode === 'llevar') {
+                const name = state.customerName.trim() || 'Por confirmar';
+                const timeStr = state.pickupTime.trim() ? ` • Hora: ${state.pickupTime.trim()}` : '';
+                return {
+                    bannerText: `Modalidad: Para llevar — ${name}`,
+                    shortText: `Para llevar • ${name}`,
+                    modalTitle: 'PARA LLEVAR (RECOGER)',
+                    modalDetails: `A nombre de: ${name}${timeStr}`
+                };
+            } else {
+                const name = state.customerName.trim() || 'Por confirmar';
+                const addr = state.deliveryAddress.trim() || 'Dirección pendiente';
+                return {
+                    bannerText: `Modalidad: A domicilio — ${name}`,
+                    shortText: `Domicilio • ${name}`,
+                    modalTitle: 'ENVÍO A DOMICILIO',
+                    modalDetails: `${name} — ${addr}`
+                };
+            }
+        }
+
+        function updateOrderInfo() {
+            if (state.mode === 'mesa') {
+                state.customerName = document.getElementById('input-name-mesa').value;
+            } else if (state.mode === 'llevar') {
+                state.customerName = document.getElementById('input-name-llevar').value;
+                state.pickupTime = document.getElementById('input-time-llevar').value;
+            } else if (state.mode === 'domicilio') {
+                state.customerName = document.getElementById('input-name-domicilio').value;
+                state.deliveryAddress = document.getElementById('input-address-domicilio').value;
+                state.deliveryMapsLink = document.getElementById('input-maps-domicilio').value;
+            }
+
+            const dest = getDestinationSummary();
+            document.getElementById('active-mode-summary').textContent = dest.bannerText;
+            document.getElementById('floating-cart-mode').textContent = dest.shortText;
+            updateFloatingCart();
+        }
+
+        function confirmAndScrollToMenu() {
+            updateOrderInfo();
+            const msg = document.getElementById('setup-validation-msg');
+
+            if (state.mode === 'llevar' && !state.customerName.trim()) {
+                msg.innerHTML = '<span class="text-terracota-600 font-bold">⚠️ Por favor escribe el nombre de quien recoge el pedido.</span>';
+                document.getElementById('input-name-llevar').focus();
+                return;
+            }
+            if (state.mode === 'domicilio' && (!state.customerName.trim() || !state.deliveryAddress.trim())) {
+                msg.innerHTML = '<span class="text-terracota-600 font-bold">⚠️ Por favor ingresa tu nombre y dirección exacta para el envío.</span>';
+                if (!state.customerName.trim()) document.getElementById('input-name-domicilio').focus();
+                else document.getElementById('input-address-domicilio').focus();
+                return;
+            }
+
+            msg.textContent = '✓ Ubicación confirmada. Elige tus platillos abajo.';
+            document.getElementById('menu-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function openWelcomeSetup() {
+            document.getElementById('welcome-setup-card').scrollIntoView({ behavior: 'smooth' });
+        }
+        // =====================================================================
+        // PESTAÑAS DINÁMICAS DE CATEGORÍAS (INTERRUPTORES DE MODO COCINA)
+        // =====================================================================
+        function getVisibleCategories() {
+            const list = [];
+            if (state.enabledCategories.cenas) list.push({ key: 'cenas', icon: '🌙', label: 'Cenas' });
+            if (state.enabledCategories.desayunos) list.push({ key: 'desayunos', icon: '☀️', label: 'Desayunos' });
+            if (state.enabledCategories.almuerzos) list.push({ key: 'almuerzos', icon: '🍲', label: 'Almuerzos' });
+            if (state.enabledCategories.bebidas) list.push({ key: 'bebidas', icon: '🥤', label: 'Bebidas' });
+            list.push({ key: 'salsas', icon: '🌶️', label: 'Salsas y Extras' });
+            return list;
+        }
+
+        function ensureValidActiveCategory() {
+            const visible = getVisibleCategories();
+            const exists = visible.some(c => c.key === state.activeCategory);
+            if (!exists && visible.length > 0) {
+                state.activeCategory = visible[0].key;
+            }
+        }
+
+        function renderCategoryTabs() {
+            ensureValidActiveCategory();
+            const visible = getVisibleCategories();
+            const bar = document.getElementById('category-tabs-bar');
+
+            bar.innerHTML = visible.map(cat => {
+                const isActive = state.activeCategory === cat.key;
+                return `
+                    <button type="button" onclick="setActiveCategory('${cat.key}')"
+                        class="flex-1 min-w-[105px] py-3 px-3 sm:px-4 rounded-xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                            isActive
+                                ? 'bg-salvia-600 text-white shadow-xs'
+                                : 'text-stone-600 hover:bg-white/60'
+                        }">
+                        <span>${cat.icon}</span>
+                        <span>${cat.label}</span>
+                    </button>
+                `;
+            }).join('');
+
+            const dinnerBar = document.getElementById('dinner-day-filter-bar');
+            const saucesBanner = document.getElementById('sauces-info-banner');
+
+            if (state.activeCategory === 'cenas') {
+                dinnerBar.classList.remove('hidden');
+            } else {
+                dinnerBar.classList.add('hidden');
+            }
+
+            if (state.activeCategory === 'salsas') {
+                saucesBanner.classList.remove('hidden');
+            } else {
+                saucesBanner.classList.add('hidden');
+            }
+        }
+
+        function setActiveCategory(cat) {
+            state.activeCategory = cat;
+            renderCategoryTabs();
+            renderMenuGrid();
+        }
+
+        function renderDinnerDayButtons() {
+            const todayInfo = getGuatemalaDayInfo();
+            const options = [
+                { key: 'hoy', label: `⭐ Hoy (${todayInfo.label})` },
+                { key: 'todos', label: 'Toda la semana (Mié-Dom)' },
+                { key: 'miercoles', label: 'Miércoles' },
+                { key: 'jueves', label: 'Jueves' },
+                { key: 'viernes', label: 'Viernes' },
+                { key: 'sabado', label: 'Sábado' },
+                { key: 'domingo', label: 'Domingo' }
+            ];
+
+            const container = document.getElementById('dinner-day-buttons');
+            container.innerHTML = options.map(opt => {
+                const active = state.selectedDinnerDay === opt.key;
+                return `
+                    <button type="button" onclick="setDinnerDayFilter('${opt.key}')"
+                        class="px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-colors cursor-pointer ${
+                            active
+                                ? 'bg-salvia-600 text-white shadow-2xs'
+                                : 'bg-crema-100 text-stone-600 hover:bg-crema-200'
+                        }">
+                        ${opt.label}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function setDinnerDayFilter(dayKey) {
+            state.selectedDinnerDay = dayKey;
+            renderDinnerDayButtons();
+            renderMenuGrid();
+        }
+        // =====================================================================
+        // RENDERIZADO DE TARJETAS DEL MENÚ CON SELECTORES DE OPCIÓN Y SALSA
+        // =====================================================================
+        function getCartKeyForCurrentSelection(itemId) {
+            const sel = state.itemSelections[itemId] || { option: '', sauce: '' };
+            return `${itemId}||${sel.option || ''}||${sel.sauce || ''}`;
+        }
+
+        function getTotalQtyInCartForItem(itemId) {
+            return Object.values(state.cart)
+                .filter(entry => entry.itemId === itemId)
+                .reduce((sum, entry) => sum + entry.qty, 0);
+        }
+
+        function updateCardOption(itemId, value) {
+            if (!state.itemSelections[itemId]) state.itemSelections[itemId] = {};
+            state.itemSelections[itemId].option = value;
+            renderMenuGrid();
+        }
+
+        function updateCardSauce(itemId, value) {
+            if (!state.itemSelections[itemId]) state.itemSelections[itemId] = {};
+            state.itemSelections[itemId].sauce = value;
+            renderMenuGrid();
+        }
+
+        function renderMenuGrid() {
+            const grid = document.getElementById('menu-grid');
+            const todayInfo = getGuatemalaDayInfo();
+
+            let itemsToShow = menuItems.filter(item => item.category === state.activeCategory);
+
+            if (state.activeCategory === 'cenas') {
+                if (state.selectedDinnerDay === 'hoy') {
+                    // Si es lunes o martes (descanso), mostramos todos para que explore el menú; de mié a dom filtramos fijos + especial del día
+                    if (!todayInfo.isRestDay) {
+                        itemsToShow = itemsToShow.filter(item =>
+                            item.dayKey === 'todos' ||
+                            item.dayKey === todayInfo.key ||
+                            (item.id === 'cena_esp_viernes_pizza' && (todayInfo.key === 'viernes' || todayInfo.key === 'sabado'))
+                        );
+                    }
+                } else if (state.selectedDinnerDay !== 'todos') {
+                    itemsToShow = itemsToShow.filter(item =>
+                        item.dayKey === 'todos' ||
+                        item.dayKey === state.selectedDinnerDay ||
+                        (item.id === 'cena_esp_viernes_pizza' && (state.selectedDinnerDay === 'viernes' || state.selectedDinnerDay === 'sabado'))
+                    );
+                }
+
+                // Ordenar poniendo primero el especial del día actual
+                itemsToShow.sort((a, b) => {
+                    const aIsToday = (a.dayKey === todayInfo.key || (a.id === 'cena_esp_viernes_pizza' && (todayInfo.key === 'viernes' || todayInfo.key === 'sabado'))) ? 1 : 0;
+                    const bIsToday = (b.dayKey === todayInfo.key || (b.id === 'cena_esp_viernes_pizza' && (todayInfo.key === 'viernes' || todayInfo.key === 'sabado'))) ? 1 : 0;
+                    return bIsToday - aIsToday;
+                });
+            }
+
+            grid.innerHTML = itemsToShow.map(item => {
+                const currentSel = state.itemSelections[item.id] || { option: '', sauce: '' };
+                const activeCartKey = getCartKeyForCurrentSelection(item.id);
+                const qtyCurrentVariant = state.cart[activeCartKey] ? state.cart[activeCartKey].qty : 0;
+                const totalItemQty = getTotalQtyInCartForItem(item.id);
+
+                const isTodaySpecial = item.category === 'cenas' && !todayInfo.isRestDay && (
+                    item.dayKey === todayInfo.key ||
+                    (item.id === 'cena_esp_viernes_pizza' && (todayInfo.key === 'viernes' || todayInfo.key === 'sabado'))
+                );
+
+                return `
+                    <article class="bg-white rounded-3xl border ${isTodaySpecial ? 'border-amber-400 ring-2 ring-amber-200/60' : (item.available ? 'border-crema-200' : 'border-stone-200 opacity-75')} p-5 shadow-2xs flex flex-col justify-between transition-all">
+                        <div>
+                            <!-- Etiqueta superior de día si es cena -->
+                            ${item.dayLabel ? `
+                                <div class="mb-2.5 flex items-center justify-between gap-2">
+                                    <span class="px-2.5 py-1 rounded-lg text-[11px] font-extrabold uppercase tracking-wide ${
+                                        isTodaySpecial
+                                            ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                                            : (item.dayKey === 'todos' ? 'bg-salvia-100 text-salvia-700' : 'bg-crema-100 text-stone-600')
+                                        }">
+                                        ${isTodaySpecial ? `⭐ Especial de Hoy (${todayInfo.label})` : item.dayLabel}
+                                    </span>
+                                </div>
+                            ` : ''}
+
+                            <!-- Fila de Ícono, Tiempo, Disponibilidad y Precio -->
+                            <div class="flex items-start justify-between gap-3 mb-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-12 h-12 rounded-2xl bg-crema-100 border border-crema-200 flex items-center justify-center text-2xl shrink-0">
+                                        ${item.icon}
+                                    </div>
+                                    <div>
+                                        <div class="flex flex-wrap items-center gap-1.5">
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-crema-100 text-stone-700">
+                                                ⏱ ${item.prepTime} min
+                                            </span>
+                                            ${item.subTag ? `
+                                                <span class="px-2 py-0.5 rounded-full text-[11px] font-bold border ${item.subTagStyle}">
+                                                    ${item.subTag}
+                                                </span>
+                                            ` : ''}
+                                            ${item.available
+                                                ? '<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-salvia-50 text-salvia-700 border border-salvia-200">Disponible hoy</span>'
+                                                : '<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-terracota-100 text-terracota-600">Agotado</span>'
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                                <span class="font-serif text-xl sm:text-2xl font-bold text-salvia-700 shrink-0">
+                                    Q${item.price.toFixed(2)}
+                                </span>
+                            </div>
+
+                            <!-- Nombre del Platillo -->
+                            <h3 class="font-serif text-lg sm:text-xl font-bold text-tinta leading-snug">
+                                ${item.name}
+                            </h3>
+
+                            <!-- Etiqueta Destacada Verde: Lo que incluye -->
+                            <div class="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-salvia-50 border border-salvia-200 text-salvia-700 text-xs font-bold">
+                                <svg class="w-3.5 h-3.5 shrink-0 text-salvia-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                <span>${item.includes}</span>
+                            </div>
+
+                            <!-- Beneficio Nutricional / Frescura -->
+                            <p class="text-xs font-semibold text-terracota-600 mt-2 flex items-center gap-1">
+                                <span>✨</span> ${item.benefit}
+                            </p>
+
+                            <!-- Descripción breve -->
+                            <p class="text-sm text-stone-600 mt-1.5 leading-relaxed">
+                                ${item.summary}
+                            </p>
+
+                            <!-- Selectores Personalizados (Término de huevo / Relleno / Estilo / Salsa de la casa) -->
+                            ${item.available && (item.options || item.hasSauceSelector) ? `
+                                <div class="mt-3.5 p-3 rounded-2xl bg-crema-50 border border-crema-200 space-y-2.5">
+                                    ${item.options ? `
+                                        <div>
+                                            <label class="block text-[11px] font-extrabold text-tinta uppercase tracking-wide mb-1">
+                                                ${item.optionLabel || 'Elige una opción'}:
+                                            </label>
+                                            <select onchange="updateCardOption('${item.id}', this.value)"
+                                                class="w-full px-3 py-2 rounded-xl border border-crema-300 bg-white text-xs font-bold text-tinta focus:outline-none focus:border-salvia-600">
+                                                ${item.options.map(opt => `
+                                                    <option value="${opt}" ${currentSel.option === opt ? 'selected' : ''}>${opt}</option>
+                                                `).join('')}
+                                            </select>
+                                        </div>
+                                    ` : ''}
+
+                                    ${item.hasSauceSelector ? `
+                                        <div>
+                                            <label class="block text-[11px] font-extrabold text-salvia-700 uppercase tracking-wide mb-1">
+                                                🌶️ Salsa artesanal incluida (gratis):
+                                            </label>
+                                            <select onchange="updateCardSauce('${item.id}', this.value)"
+                                                class="w-full px-3 py-2 rounded-xl border border-salvia-200 bg-white text-xs font-bold text-tinta focus:outline-none focus:border-salvia-600">
+                                                ${SAUCE_CHOICES.map(sc => `
+                                                    <option value="${sc}" ${currentSel.sauce === sc ? 'selected' : ''}>${sc}</option>
+                                                `).join('')}
+                                            </select>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            ` : ''}
+
+                            <!-- Acordeón transparente: Ingredientes y preparación al momento -->
+                            <div class="mt-3">
+                                <button type="button" onclick="toggleAccordion('${item.id}')"
+                                    class="text-xs font-bold text-salvia-700 hover:text-salvia-600 bg-crema-100 hover:bg-crema-200/80 px-3 py-2 rounded-xl transition-colors inline-flex items-center gap-1.5 cursor-pointer">
+                                    <svg id="acc-icon-${item.id}" class="w-4 h-4 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    <span>Ver ingredientes y preparación al momento</span>
+                                </button>
+
+                                <div id="acc-body-${item.id}" class="hidden mt-2.5 p-3.5 rounded-2xl bg-crema-50 border border-crema-200 text-xs text-stone-700 space-y-2 leading-relaxed">
+                                    <p><strong class="text-tinta">🥗 Ingredientes:</strong> ${item.ingredients}</p>
+                                    <p><strong class="text-tinta">🍳 Preparación:</strong> ${item.preparation}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Controles de Porciones: Atajos 1, 2, 4 y botones - / + -->
+                        <div class="mt-5 pt-4 border-t border-crema-100">
+                            ${item.available ? `
+                                <div class="flex flex-wrap items-center justify-between gap-3">
+                                    <div class="flex items-center gap-1">
+                                        <span class="text-[11px] font-semibold text-stone-500 mr-1">Órdenes:</span>
+                                        ${[1, 2, 4].map(preset => `
+                                            <button type="button" onclick="setCurrentVariantQuantity('${item.id}', ${preset})"
+                                                class="px-2.5 py-1.5 rounded-lg text-xs font-extrabold transition-colors cursor-pointer ${
+                                                    qtyCurrentVariant === preset
+                                                        ? 'bg-salvia-600 text-white'
+                                                        : 'bg-crema-100 text-stone-700 hover:bg-crema-200'
+                                                }">
+                                                ${preset}
+                                            </button>
+                                        `).join('')}
+                                    </div>
+
+                                    <div class="flex items-center gap-2 bg-crema-100 p-1 rounded-xl border border-crema-200">
+                                        <button type="button" onclick="changeCurrentVariantQuantity('${item.id}', -1)"
+                                            class="w-8 h-8 rounded-lg bg-white text-tinta font-extrabold text-base flex items-center justify-center shadow-2xs hover:bg-crema-50 cursor-pointer"
+                                            aria-label="Restar una orden">−</button>
+                                        <span class="w-7 text-center font-extrabold text-sm text-tinta">${qtyCurrentVariant}</span>
+                                        <button type="button" onclick="changeCurrentVariantQuantity('${item.id}', 1)"
+                                            class="w-8 h-8 rounded-lg bg-salvia-600 text-white font-extrabold text-base flex items-center justify-center shadow-2xs hover:bg-salvia-700 cursor-pointer"
+                                            aria-label="Agregar una orden">+</button>
+                                    </div>
+                                </div>
+                                ${totalItemQty > 0 ? `
+                                    <div class="mt-2.5 flex items-center justify-between text-xs font-extrabold text-salvia-700 bg-salvia-50 px-3 py-1.5 rounded-xl border border-salvia-100">
+                                        <span>En tu charola (${totalItemQty} ${totalItemQty === 1 ? 'orden' : 'órdenes'}):</span>
+                                        <span>Q${(totalItemQty * item.price).toFixed(2)}</span>
+                                    </div>` : ''}
+                            ` : `
+                                <div class="w-full py-2.5 px-4 rounded-xl bg-stone-100 text-stone-500 text-xs font-bold text-center">
+                                    Agotado por hoy
+                                </div>
+                            `}
+                        </div>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        function toggleAccordion(itemId) {
+            const body = document.getElementById(`acc-body-${itemId}`);
+            const icon = document.getElementById(`acc-icon-${itemId}`);
+            if (body.classList.contains('hidden')) {
+                body.classList.remove('hidden');
+                icon.classList.add('rotate-180');
+            } else {
+                body.classList.add('hidden');
+                icon.classList.remove('rotate-180');
+            }
+        }
+
+        // =====================================================================
+        // GESTIÓN DE LA CHAROLA DE PEDIDO (SOPORTA VARIANTES POR SALSA/OPCIÓN)
+        // =====================================================================
+        function changeCurrentVariantQuantity(itemId, delta) {
+            const cartKey = getCartKeyForCurrentSelection(itemId);
+            const current = state.cart[cartKey] ? state.cart[cartKey].qty : 0;
+            const next = Math.max(0, current + delta);
+            setCartKeyQuantity(cartKey, itemId, next, delta > 0);
+        }
+
+        function setCurrentVariantQuantity(itemId, qty) {
+            const cartKey = getCartKeyForCurrentSelection(itemId);
+            setCartKeyQuantity(cartKey, itemId, qty, true);
+        }
+
+        function setCartKeyQuantity(cartKey, itemId, qty, showFeedback = true) {
+            if (qty <= 0) {
+                delete state.cart[cartKey];
+            } else {
+                const sel = state.itemSelections[itemId] || { option: '', sauce: '' };
+                state.cart[cartKey] = {
+                    itemId,
+                    option: sel.option || '',
+                    sauce: sel.sauce || '',
+                    qty
+                };
+                if (showFeedback) {
+                    const item = menuItems.find(i => i.id === itemId);
+                    if (item) showToast(`✓ ${item.name} (${qty})`);
+                }
+            }
+            renderMenuGrid();
+            updateFloatingCart();
+            if (!document.getElementById('cart-modal').classList.contains('hidden')) {
+                renderCartModalContent();
+            }
+        }
+
+        function changeCartKeyDirect(cartKey, delta) {
+            const entry = state.cart[cartKey];
+            if (!entry) return;
+            const next = entry.qty + delta;
+            if (next <= 0) {
+                delete state.cart[cartKey];
+            } else {
+                entry.qty = next;
+            }
+            renderMenuGrid();
+            updateFloatingCart();
+            renderCartModalContent();
+        }
+
+        function calculateOrderTotals() {
+            let totalCount = 0;
+            let subtotal = 0;
+            let maxPrepTime = 0;
+            const foodLines = [];
+            const drinkLines = [];
+            const sauceLines = [];
+
+            Object.entries(state.cart).forEach(([cartKey, entry]) => {
+                const item = menuItems.find(i => i.id === entry.itemId);
+                if (item && entry.qty > 0) {
+                    totalCount += entry.qty;
+                    const lineTotal = item.price * entry.qty;
+                    subtotal += lineTotal;
+                    if (item.prepTime > maxPrepTime) maxPrepTime = item.prepTime;
+
+                    const lineObj = {
+                        cartKey,
+                        item,
+                        qty: entry.qty,
+                        option: entry.option,
+                        sauce: entry.sauce,
+                        lineTotal
+                    };
+
+                    if (item.category === 'bebidas') {
+                        drinkLines.push(lineObj);
+                    } else if (item.category === 'salsas') {
+                        sauceLines.push(lineObj);
+                    } else {
+                        foodLines.push(lineObj);
+                    }
+                }
+            });
+
+            const extraKitchenMinutes = totalCount > 1 ? Math.min(10, (totalCount - 1) * 2) : 0;
+            const deliveryFee = state.mode === 'domicilio' ? state.deliveryFee : 0;
+            const deliveryMinutes = state.mode === 'domicilio' ? 25 : 0;
+
+            return {
+                totalCount,
+                subtotal,
+                deliveryFee,
+                grandTotal: subtotal + deliveryFee,
+                estimatedMinutes: maxPrepTime + extraKitchenMinutes + deliveryMinutes,
+                foodLines,
+                drinkLines,
+                sauceLines,
+                allLines: [...foodLines, ...drinkLines, ...sauceLines]
+            };
+        }
+
+        function updateFloatingCart() {
+            const bar = document.getElementById('floating-cart-bar');
+            const totals = calculateOrderTotals();
+
+            if (totals.totalCount > 0) {
+                bar.classList.remove('translate-y-full');
+                document.getElementById('floating-cart-count').textContent = totals.totalCount;
+                document.getElementById('floating-cart-total').textContent = `Q${totals.grandTotal.toFixed(2)}`;
+            } else {
+                bar.classList.add('translate-y-full');
+            }
+        }
+        function openCartModal() {
+            updateOrderInfo();
+            document.getElementById('whatsapp-fallback-box').classList.add('hidden');
+            renderCartModalContent();
+            const modal = document.getElementById('cart-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeCartModal() {
+            const modal = document.getElementById('cart-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function editDestinationFromCart() {
+            closeCartModal();
+            openWelcomeSetup();
+        }
+
+        function renderCartModalContent() {
+            const dest = getDestinationSummary();
+            const totals = calculateOrderTotals();
+
+            document.getElementById('cart-destination-title').textContent = dest.modalTitle;
+            document.getElementById('cart-destination-details').textContent = dest.modalDetails;
+
+            const alertBox = document.getElementById('cart-missing-alert');
+            if (state.mode === 'domicilio' && (!state.customerName.trim() || !state.deliveryAddress.trim())) {
+                alertBox.textContent = '⚠️ Falta tu nombre o dirección exacta para envío a domicilio. Toca "Cambiar" arriba para agregarlos.';
+                alertBox.classList.remove('hidden');
+            } else if (state.mode === 'llevar' && !state.customerName.trim()) {
+                alertBox.textContent = '⚠️ Falta el nombre de quien recoge el pedido. Toca "Cambiar" arriba para agregarlo.';
+                alertBox.classList.remove('hidden');
+            } else {
+                alertBox.classList.add('hidden');
+            }
+
+            const container = document.getElementById('cart-grouped-items');
+            if (totals.allLines.length === 0) {
+                container.innerHTML = '<p class="text-sm text-stone-500 text-center py-6 bg-white rounded-2xl border border-crema-200">Tu charola está vacía.</p>';
+            } else {
+                let html = '';
+
+                if (totals.foodLines.length > 0) {
+                    html += `
+                        <div>
+                            <h4 class="text-xs font-extrabold uppercase tracking-wider text-salvia-700 mb-2">🍽️ Platillos (${totals.foodLines.reduce((acc, l) => acc + l.qty, 0)})</h4>
+                            <div class="space-y-2">
+                                ${totals.foodLines.map(renderCartLineHtml).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                if (totals.drinkLines.length > 0) {
+                    html += `
+                        <div>
+                            <h4 class="text-xs font-extrabold uppercase tracking-wider text-terracota-600 mb-2">🥤 Bebidas (${totals.drinkLines.reduce((acc, l) => acc + l.qty, 0)})</h4>
+                            <div class="space-y-2">
+                                ${totals.drinkLines.map(renderCartLineHtml).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+                if (totals.sauceLines.length > 0) {
+                    html += `
+                        <div>
+                            <h4 class="text-xs font-extrabold uppercase tracking-wider text-amber-800 mb-2">🌶️ Salsas Extra (${totals.sauceLines.reduce((acc, l) => acc + l.qty, 0)})</h4>
+                            <div class="space-y-2">
+                                ${totals.sauceLines.map(renderCartLineHtml).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                container.innerHTML = html;
+            }
+
+            document.getElementById('cart-estimated-time').textContent = state.mode === 'domicilio'
+                ? `${totals.estimatedMinutes} min (incluye +25 min envío)`
+                : `${totals.estimatedMinutes} min aprox.`;
+            document.getElementById('cart-subtotal').textContent = `Q${totals.subtotal.toFixed(2)}`;
+
+            const deliveryRow = document.getElementById('cart-delivery-row');
+            if (state.mode === 'domicilio') {
+                deliveryRow.classList.remove('hidden');
+                document.getElementById('cart-delivery-cost').textContent = `Q${totals.deliveryFee.toFixed(2)}`;
+            } else {
+                deliveryRow.classList.add('hidden');
+            }
+
+            document.getElementById('cart-grand-total').textContent = `Q${totals.grandTotal.toFixed(2)}`;
+        }
+
+        function renderCartLineHtml({ cartKey, item, qty, option, sauce, lineTotal }) {
+            const subDetails = [];
+            if (option) subDetails.push(`Opción: ${option}`);
+            if (sauce) subDetails.push(`Salsa: ${sauce}`);
+
+            return `
+                <div class="bg-white p-3.5 rounded-2xl border border-crema-200 flex items-center justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="font-bold text-sm text-tinta truncate">${item.icon} ${item.name}</p>
+                        ${subDetails.length > 0 ? `
+                            <p class="text-[11px] font-semibold text-salvia-700 mt-0.5">${subDetails.join(' • ')}</p>
+                        ` : ''}
+                        <p class="text-xs text-stone-500 mt-0.5">Q${item.price.toFixed(2)} c/u • ⏱ ${item.prepTime} min</p>
+                    </div>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <button type="button" onclick="changeCartKeyDirect('${cartKey}', -1)" class="w-7 h-7 rounded-lg bg-crema-100 text-tinta font-extrabold text-sm flex items-center justify-center cursor-pointer">−</button>
+                        <span class="w-5 text-center font-extrabold text-sm">${qty}</span>
+                        <button type="button" onclick="changeCartKeyDirect('${cartKey}', 1)" class="w-7 h-7 rounded-lg bg-salvia-600 text-white font-extrabold text-sm flex items-center justify-center cursor-pointer">+</button>
+                        <span class="w-16 text-right font-extrabold text-sm text-salvia-700">Q${lineTotal.toFixed(2)}</span>
+                    </div>
+                </div>
+            `;
+        }
+        // =====================================================================
+        // WHATSAPP + RESPALDO PORTAPAPELES + MOSTRADOR + VACIAR
+        // =====================================================================
+        function formatLineForText({ item, qty, option, sauce, lineTotal }) {
+            const extras = [];
+            if (option) extras.push(option);
+            if (sauce) extras.push(`Salsa: ${sauce}`);
+            const suffix = extras.length > 0 ? ` [${extras.join(' | ')}]` : '';
+            return `• ${qty}x ${item.name}${suffix} — Q${lineTotal.toFixed(2)}\n`;
+        }
+
+        function buildWhatsAppOrderText() {
+            const totals = calculateOrderTotals();
+            const dest = getDestinationSummary();
+            const notes = document.getElementById('cart-special-notes').value.trim();
+
+            let msg = `🌿 *PEDIDO — ${state.businessName.toUpperCase()}* 🌿\n\n`;
+            msg += `📍 *${dest.modalTitle}*\n`;
+
+            if (state.mode === 'mesa') {
+                if (state.customerName.trim()) msg += `👤 *Cliente:* ${state.customerName.trim()}\n`;
+            } else if (state.mode === 'llevar') {
+                msg += `👤 *Recoge:* ${state.customerName.trim()}\n`;
+                if (state.pickupTime.trim()) msg += `🕒 *Hora aprox.:* ${state.pickupTime.trim()}\n`;
+            } else if (state.mode === 'domicilio') {
+                msg += `👤 *Cliente:* ${state.customerName.trim()}\n`;
+                msg += `🏠 *Dirección:* ${state.deliveryAddress.trim()}\n`;
+                if (state.deliveryMapsLink.trim()) msg += `🗺️ *Maps:* ${state.deliveryMapsLink.trim()}\n`;
+            }
+
+            if (totals.foodLines.length > 0) {
+                msg += `\n🍽️ *Platillos:*\n`;
+                totals.foodLines.forEach(line => { msg += formatLineForText(line); });
+            }
+
+            if (totals.drinkLines.length > 0) {
+                msg += `\n🥤 *Bebidas:*\n`;
+                totals.drinkLines.forEach(line => { msg += formatLineForText(line); });
+            }
+
+            if (totals.sauceLines.length > 0) {
+                msg += `\n🌶️ *Salsas Extra:*\n`;
+                totals.sauceLines.forEach(line => { msg += formatLineForText(line); });
+            }
+
+            if (notes) {
+                msg += `\n📝 *Notas:* ${notes}\n`;
+            }
+
+            msg += `\n⏱️ *Tiempo estimado:* ${totals.estimatedMinutes} min`;
+            if (state.mode === 'domicilio') {
+                msg += `\n🛵 *Envío a domicilio:* Q${totals.deliveryFee.toFixed(2)}`;
+            }
+            msg += `\n💰 *TOTAL: Q${totals.grandTotal.toFixed(2)}*`;
+
+            return msg;
+        }
+
+        function sendOrderViaWhatsApp() {
+            const totals = calculateOrderTotals();
+            if (totals.allLines.length === 0) return;
+
+            if (state.mode === 'llevar' && !state.customerName.trim()) {
+                editDestinationFromCart();
+                confirmAndScrollToMenu();
+                return;
+            }
+            if (state.mode === 'domicilio' && (!state.customerName.trim() || !state.deliveryAddress.trim())) {
+                editDestinationFromCart();
+                confirmAndScrollToMenu();
+                return;
+            }
+
+            const messageText = buildWhatsAppOrderText();
+            const cleanPhone = state.whatsappNumber.replace(/\D/g, '');
+            const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(messageText)}`;
+
+            const fallbackBox = document.getElementById('whatsapp-fallback-box');
+            document.getElementById('whatsapp-raw-text').value = messageText;
+            document.getElementById('whatsapp-direct-anchor').href = waUrl;
+            fallbackBox.classList.remove('hidden');
+
+            window.open(waUrl, '_blank', 'noopener,noreferrer');
+        }
+
+        function copyOrderTextToClipboard() {
+            const textarea = document.getElementById('whatsapp-raw-text');
+            textarea.select();
+            textarea.setSelectionRange(0, 99999);
+            try {
+                document.execCommand('copy');
+                showToast('✓ Pedido copiado al portapapeles');
+            } catch (e) {
+                showToast('Selecciona el texto y cópialo manualmente');
+            }
+        }
+
+        function openCounterDisplayModal() {
+            const totals = calculateOrderTotals();
+            const dest = getDestinationSummary();
+
+            document.getElementById('counter-title').textContent = dest.modalTitle;
+            document.getElementById('counter-subtitle').textContent = dest.modalDetails;
+            document.getElementById('counter-time').textContent = `${totals.estimatedMinutes} minutos`;
+            document.getElementById('counter-total').textContent = `Q${totals.grandTotal.toFixed(2)}`;
+
+            document.getElementById('counter-items-list').innerHTML = totals.allLines.map(({ item, qty, option, sauce, lineTotal }) => {
+                const sub = [option, sauce ? `Salsa: ${sauce}` : ''].filter(Boolean).join(' • ');
+                return `
+                    <div class="bg-stone-800 rounded-2xl p-4 flex items-center justify-between gap-4 border border-stone-700">
+                        <div class="flex items-center gap-3.5">
+                            <span class="w-11 h-11 rounded-xl bg-salvia-600 text-white font-extrabold text-xl flex items-center justify-center shrink-0">
+                                ${qty}x
+                            </span>
+                            <div>
+                                <span class="block text-lg sm:text-xl font-bold text-white">${item.name}</span>
+                                ${sub ? `<span class="block text-xs sm:text-sm text-salvia-100 mt-0.5">${sub}</span>` : ''}
+                            </div>
+                        </div>
+                        <span class="text-lg sm:text-xl font-extrabold text-salvia-100 shrink-0">Q${lineTotal.toFixed(2)}</span>
+                    </div>
+                `;
+            }).join('');
+
+            const modal = document.getElementById('counter-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeCounterDisplayModal() {
+            const modal = document.getElementById('counter-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function openCancelConfirmModal() {
+            const modal = document.getElementById('cancel-confirm-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeCancelConfirmModal() {
+            const modal = document.getElementById('cancel-confirm-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function executeCancelOrder() {
+            state.cart = {};
+            closeCancelConfirmModal();
+            closeCartModal();
+            renderMenuGrid();
+            updateFloatingCart();
+            showToast('Charola vaciada');
+        }
+        // =====================================================================
+        // MODO COCINA / DUEÑO + INTERRUPTORES MAESTROS + SERIALIZACIÓN GITHUB
+        // =====================================================================
+        function openKitchenAuthModal() {
+            document.getElementById('kitchen-pin-input').value = '';
+            document.getElementById('kitchen-pin-error').classList.add('hidden');
+            document.getElementById('kitchen-pin-screen').classList.remove('hidden');
+            document.getElementById('kitchen-admin-screen').classList.add('hidden');
+
+            const modal = document.getElementById('kitchen-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeKitchenModal() {
+            const modal = document.getElementById('kitchen-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function verifyKitchenPin() {
+            const pin = document.getElementById('kitchen-pin-input').value.trim();
+            if (pin === KITCHEN_PIN) {
+                document.getElementById('kitchen-pin-screen').classList.add('hidden');
+                document.getElementById('kitchen-admin-screen').classList.remove('hidden');
+                renderKitchenAdminPanel();
+            } else {
+                document.getElementById('kitchen-pin-error').classList.remove('hidden');
+            }
+        }
+
+        function renderKitchenAdminPanel() {
+            document.getElementById('admin-business-name-input').value = state.businessName;
+            document.getElementById('admin-whatsapp-input').value = state.whatsappNumber;
+            document.getElementById('admin-delivery-fee-input').value = state.deliveryFee;
+
+            // Renderizar los 4 interruptores maestros por tiempo de comida
+            const mealConfigs = [
+                { key: 'cenas', label: '🌙 Cenas' },
+                { key: 'desayunos', label: '☀️ Desayunos' },
+                { key: 'almuerzos', label: '🍲 Almuerzos' },
+                { key: 'bebidas', label: '🥤 Bebidas' }
+            ];
+
+            document.getElementById('admin-meal-toggles').innerHTML = mealConfigs.map(mc => {
+                const isOn = !!state.enabledCategories[mc.key];
+                return `
+                    <div class="p-3 rounded-xl border ${isOn ? 'bg-salvia-50 border-salvia-300' : 'bg-crema-50 border-crema-200'} flex items-center justify-between gap-2">
+                        <span class="text-xs font-extrabold ${isOn ? 'text-salvia-700' : 'text-stone-500'}">${mc.label}</span>
+                        <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                            <input type="checkbox" class="sr-only peer" ${isOn ? 'checked' : ''} onchange="toggleMealCategory('${mc.key}')">
+                            <div class="w-10 h-5 bg-stone-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-salvia-600"></div>
+                        </label>
+                    </div>
+                `;
+            }).join('');
+
+            // Renderizar lista individual de platillos, bebidas y salsas
+            const container = document.getElementById('admin-dishes-list');
+            container.innerHTML = menuItems.map(item => `
+                <div class="bg-white p-3.5 rounded-2xl border border-crema-200 flex flex-wrap items-center justify-between gap-3">
+                    <div class="min-w-0 flex-1">
+                        <p class="font-bold text-sm text-tinta truncate">${item.icon} ${item.name}</p>
+                        <p class="text-[11px] font-semibold ${item.available ? 'text-salvia-700' : 'text-terracota-600'}">
+                            ${item.category.toUpperCase()} • ${item.available ? '✓ Disponible' : '✕ Agotado'}
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-3 shrink-0">
+                        <div class="flex items-center gap-1 bg-crema-50 border border-crema-300 rounded-xl px-2.5 py-1">
+                            <span class="text-xs font-bold text-stone-500">Q</span>
+                            <input type="number" min="0" step="1" value="${item.price}"
+                                onchange="updateDishPrice('${item.id}', this.value)"
+                                class="w-14 bg-transparent text-sm font-extrabold text-tinta focus:outline-none text-right">
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" class="sr-only peer" ${item.available ? 'checked' : ''} onchange="toggleDishAvailability('${item.id}')">
+                            <div class="w-11 h-6 bg-stone-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-salvia-600"></div>
+                        </label>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleMealCategory(catKey) {
+            state.enabledCategories[catKey] = !state.enabledCategories[catKey];
+            persistKitchenChanges();
+            renderKitchenAdminPanel();
+            renderCategoryTabs();
+            renderMenuGrid();
+            showToast(state.enabledCategories[catKey] ? `✓ Menú ${catKey} activado` : `Menú ${catKey} oculto`);
+        }
+
+        function updateDishPrice(itemId, newVal) {
+            const parsed = parseFloat(newVal);
+            if (isNaN(parsed) || parsed < 0) return;
+            const item = menuItems.find(i => i.id === itemId);
+            if (!item) return;
+            item.price = parsed;
+            persistKitchenChanges();
+            renderMenuGrid();
+            updateFloatingCart();
+            showToast(`Precio actualizado: Q${parsed.toFixed(2)}`);
+        }
+
+        function toggleDishAvailability(itemId) {
+            const item = menuItems.find(i => i.id === itemId);
+            if (!item) return;
+            item.available = !item.available;
+            if (!item.available) {
+                Object.keys(state.cart).forEach(k => {
+                    if (state.cart[k].itemId === itemId) delete state.cart[k];
+                });
+            }
+            persistKitchenChanges();
+            renderKitchenAdminPanel();
+            renderMenuGrid();
+            updateFloatingCart();
+        }
+
+        function saveKitchenSettings() {
+            const bName = document.getElementById('admin-business-name-input').value.trim();
+            const phoneRaw = document.getElementById('admin-whatsapp-input').value.replace(/\D/g, '');
+            const feeVal = parseFloat(document.getElementById('admin-delivery-fee-input').value);
+            if (bName) {
+                state.businessName = bName;
+                document.getElementById('header-business-name').textContent = bName;
+            }
+            if (phoneRaw) state.whatsappNumber = phoneRaw;
+            if (!isNaN(feeVal) && feeVal >= 0) state.deliveryFee = feeVal;
+            persistKitchenChanges();
+            updateDeliveryFeeDisplays();
+        }
+
+        function updateDeliveryFeeDisplays() {
+            document.getElementById('display-delivery-fee-banner').textContent = `Q${state.deliveryFee.toFixed(2)}`;
+        }
+        function exportHtmlForGitHub() {
+            const docClone = document.documentElement.cloneNode(true);
+
+            // Asegurar modales cerrados en el archivo exportado
+            ['cart-modal', 'counter-modal', 'cancel-confirm-modal', 'kitchen-modal'].forEach(id => {
+                const el = docClone.querySelector(`#${id}`);
+                if (el) {
+                    el.classList.add('hidden');
+                    el.classList.remove('flex');
+                }
+            });
+
+            // Serializar DEFAULT_CONFIG y DEFAULT_MENU_ITEMS actuales dentro del script
+            const scriptEl = docClone.querySelector('#app-data-and-logic');
+            if (scriptEl) {
+                let code = scriptEl.textContent;
+                const newConfigStr = `const DEFAULT_CONFIG = ${JSON.stringify({
+                    businessName: state.businessName,
+                    whatsappNumber: state.whatsappNumber,
+                    deliveryFee: state.deliveryFee,
+                    enabledCategories: state.enabledCategories
+                }, null, 12)};`;
+                const newMenuStr = `const DEFAULT_MENU_ITEMS = ${JSON.stringify(menuItems, null, 12)};`;
+
+                code = code.replace(/const DEFAULT_CONFIG = \{[\s\S]*?\n        \};/, newConfigStr);
+                code = code.replace(/const DEFAULT_MENU_ITEMS = \[[\s\S]*?\n        \];/, newMenuStr);
+                scriptEl.textContent = code;
+            }
+
+            const finalHtml = '<!DOCTYPE html>\n' + docClone.outerHTML;
+            const blob = new Blob([finalHtml], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'index.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showToast('✓ Archivo index.html descargado para GitHub');
+        }
+
+        // =====================================================================
+        // UTILIDADES
+        // =====================================================================
+        let toastTimer;
+        function showToast(text) {
+            const toast = document.getElementById('toast-notification');
+            toast.textContent = text;
+            toast.classList.remove('opacity-0');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.classList.add('opacity-0');
+            }, 2200);
+        }
+
+        window.addEventListener('click', (e) => {
+            if (e.target === document.getElementById('cart-modal')) closeCartModal();
+            if (e.target === document.getElementById('cancel-confirm-modal')) closeCancelConfirmModal();
+            if (e.target === document.getElementById('kitchen-modal')) closeKitchenModal();
+        });
+
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
